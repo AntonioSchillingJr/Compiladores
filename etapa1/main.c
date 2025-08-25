@@ -1,7 +1,6 @@
 /*
   Programa principal de impressão de tokens.
   Este arquivo será posteriormente substituído.
-  flex scanner.l ; gcc lex.yy.c -c ; gcc main.c -c ; gcc main.o lex.yy.o -o e1 ; cat arquivo-de-teste.txt | ./e1
 */
 #include <stdio.h>
 #define _(s) #s // https://gcc.gnu.org/onlinedocs/gcc-12.2.0/cpp/Stringizing.html
