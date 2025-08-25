@@ -32,8 +32,8 @@ com { return TK_COM; }
 
  /* Operadores Compostos */
 
-<= { return TK_OC_LE; }
->= { return TK_OC_GE; }
+\<= { return TK_OC_LE; }
+\>= { return TK_OC_GE; }
 == { return TK_OC_EQ; }
 != { return TK_OC_NE; }
 := { return TK_ATRIB; }
