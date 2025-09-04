@@ -30,64 +30,102 @@ int get_line_number(void);
 %%
 
 
-// definição da gramática, passo a passo, de acordo com a especificação
+// Definição da gramática, passo a passo, de acordo com a especificação ---------------------------------------------------------------------------------------------------------------------------------
 
-// "Um programa na linguagem é composto por uma lista opcional de elementos."
-programa: /*empty*/;  		// lista de elementos/programa vazio
-programa: lista ';';		// lista não-vazia seguida de ';' marcando final do programa
-			
-// "Os elementos da lista são separados pelo operador vírgula e a lista é terminada pelo operador ponto-e-vírgula."				
-lista: elemento; 				// lista não-vazia formada por apenas um elemento
-lista: lista ',' elemento;	 	// lista não-vazia formada por uma sequência de elementos 	
-			
-// "Cada elemento dessa lista é ou uma definição de função ou uma declaração de variável."
-elemento: definicao_funcao;		// variação possível dos elementos da lista - definição de função
-elemento: declaracao_variavel;  // variação possível dos elementos da lista - declaração de variável
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//	Documentação de padrões de gramática utilizados no trabalho:
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//		1. "Lista" / "Sequência" de "elementos":
+//				lista: elemento;		// lista ou sequência contendo apenas 1 elemento ou final da recursão
+//				lista: lista elemento;	// recursão à esquerda dos elementos 
+//			- Adição de separador de elementos ou de sinalizador de final de lista a critério da definição (omitido se não especificado).
+//
+//		2. "Lista" / "Sequência" "opcional" de "elementos":
+//				lista: /*empty*/;		// lista ou sequência vazia
+//				lista: elemento;		// lista ou sequência contendo apenas 1 elemento ou final da recursão
+//				lista: lista elemento;	// recursão à esquerda dos elementos 
+//			- Adição de separador de elementos ou de sinalizador de final de lista a critério da definição (omitido se não especificado).
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// "Definição de Função: Ela possui um cabeçalho e um corpo." 
-definicao_funcao: cabecalho_funcao corpo_funcao;
 
-// "O cabeçalho consiste no token TK_ID seguido do token TK_SETA seguido ou do token TK_DECIMAL ou do token TK_INTEIRO, seguido por uma lista opcional de parâmetros seguido do token TK_ATRIB."
-cabecalho_funcao: TK_ID TK_SETA token_decimal_ou_inteiro lista_opcional_de_parametros TK_ATRIB;
+// "Um programa na linguagem é composto por [...]"
+programa: /*empty*/;  									// "[...] lista opcional [...]"
+programa: lista_de_elementos ';';						// "[...] de elementos. [...] e a lista é terminada pelo operador ponto-e-vírgula."
+lista_de_elementos: elemento; 							// definição de lista 
+lista_de_elementos: lista_de_elementos ',' elemento;	// "[...] elementos da lista são separados pelo operador vírgula [...]"
 
-// representação concisa de "ou token decimal ou token inteiro"
+
+// "Cada elemento dessa lista é [...]"
+elemento: definicao_de_funcao;		// "[...] ou uma definição de função [...]"
+elemento: declaracao_de_variavel;	// "[...] ou uma declaração de variável."
+
+
+// "Definição de Função: Ela possui um cabeçalho e um corpo."  
+definicao_de_funcao: cabecalho_da_funcao corpo_da_funcao;
+
+
+// "O cabeçalho consiste [...]"
+// "[...] no token TK_ID [...]"
+// "[...] seguido do token TK_SETA [...]" 
+// "[...] seguido ou do token TK_DECIMAL ou do token TK_INTEIRO [...]" 
+// "[...] seguido por uma lista opcional de parâmetros [...]"
+// "[...] seguido do token TK_ATRIB."
+cabecalho_da_funcao: TK_ID TK_SETA token_decimal_ou_inteiro lista_opcional_de_parametros TK_ATRIB;
+
+
+// "[...] ou do token TK_DECIMAL ou do token TK_INTEIRO [...]"
 token_decimal_ou_inteiro: TK_DECIMAL | TK_INTEIRO;
 
-// definição de uma lista de parâmetros possivelmente vazia
-lista_opcional_de_parametros: /*empty*/;
 
-// "A lista de parâmetros, quando presente, consiste no token opcional TK_COM seguido de uma lista, separada por vírgula, de parâmetros."
-lista_opcional_de_parametros: TK_COM lista_nao_vazia_de_parametros;
+// "A lista de parâmetros, quando presente, consiste [...] 
+lista_opcional_de_parametros: /*empty*/;									// definição de lista opcional
+lista_opcional_de_parametros: TK_COM lista_nao_vazia_de_parametros;			// "[...] no token opcional TK_COM seguido de uma lista [...] de parâmetros."
+lista_nao_vazia_de_parametros: parametro;									// definição de lista
+lista_nao_vazia_de_parametros: lista_nao_vazia_de_parametros ',' parametro;	// "[...] separada por vírgula [...]"
 
-// definição de uma lista de parâmetros confirmadamente não-vazia
-lista_nao_vazia_de_parametros: parametro;
-lista_nao_vazia_de_parametros: lista_nao_vazia_de_parametros ',' parametro;
 
-// "Cada parâmetro consiste no token TK_ID seguido do token TK_ATRIB seguido ou do token TK_INTEIRO ou do token TK_DECIMAL."
+// "Cada parâmetro consiste [...]" 
+// "[...] no token TK_ID [...]"
+// "[...] seguido do token TK_ATRIB [...]" 
+// "[...] seguido ou do token TK_INTEIRO ou do token TK_DECIMAL."
 parametro: TK_ID TK_ATRIB token_decimal_ou_inteiro;
 
+
 // "O corpo de uma função é um bloco de comandos"
-corpo_funcao: 	bloco_de_comandos ;
-
-
-// "Bloco de Comandos: Definido entre colchetes, e consiste em uma sequência, possivelmente vazia, de comandos simples. Um bloco de comandos é considerado como um comando único simples e pode ser utilizado em qualquer construção que aceite um comando simples.
-bloco_de_comandos: ;
+corpo_da_funcao: bloco_de_comandos;
 
 
 
-// "Os comandos simples da linguagem podem ser: bloco de comandos, declaração de variável, comando de atribuição, chamada de função, comando de retorno, e construções de fluxo de controle."
-comando_simples: ;
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------ ADIÇÕES FEITAS SEM RODAR O BISON PARA TESTAGEM AINDA ------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// "Bloco de Comandos: [...] "  
+bloco_de_comandos: '[' sequencia_opcional_de_comandos_simples ']';	// "[...] Definido entre colchetes [...]"
+sequencia_opcional_de_comandos_simples: /*empty*/; 					// "[...] uma sequência, possivelmente vazia [...]"
+sequencia_opcional_de_comandos_simples: comando_simples;			// "[...] de comandos simples."
+sequencia_opcional_de_comandos_simples: sequencia_opcional_de_comandos_simples comando_simples; // DÚVIDA: sem separador entre comandos simples?
+
+
+// "Os comandos simples da linguagem podem ser: [...]" 
+comando_simples: bloco_de_comandos; 			// "[...] bloco de comandos, [...]" 
+comando_simples: declaracao_de_variavel; 		// "[...] declaração de variável, [...]" 
+comando_simples: comando_de_atribuicao; 		// "[...] comando de atribuição, [...]" 
+comando_simples: chamada_de_funcao; 			// "[...] chamada de função, [...]" 
+comando_simples: comando_de_retorno; 			// "[...] comando de retorno, [...]" 
+comando_simples: comando_de_controle_de_fluxo; 	// "[...] e construções de fluxo de controle."
+
 
 
 // "Declaração de variável: Esta declaração é idêntica ao comando simples de declaração de variável, sendo que a única e importante diferença é que esse elemento não pode receber valores de inicialização."
-declaracao_variavel: ;
+declaracao_de_variavel: ;
 
 // Declaração de Variável: Consiste no token TK_VAR seguido do token TK_ID, que é por sua vez seguido do token TK_ATRIB e enfim seguido do tipo. O tipo pode ser ou o token TK_DECIMAL ou o token TK_INTEIRO. Uma variável pode ser opcionalmente inicializada caso sua declaração seja seguida do token TK_COM e de um literal. 
 
 
-// Um literal pode ser ou o token TK_LI_INTEIRO ou o token TK_LI_DECIMAL.
-literal: TK_LI_INTEIRO | TK_LI_DECIMAL;
-
+// "Um literal pode ser [...]"
+literal: TK_LI_INTEIRO;		// "[...] ou o token TK_LI_INTEIRO [...]"
+literal: TK_LI_DECIMAL;		// "[...] ou o token TK_LI_DECIMAL."
 
 
 /*
@@ -175,7 +213,7 @@ TK_OC_NE Binária
 
 %%
 
-
+// função de mensagem de erro
 void yyerror (char const *mensagem) {
 	printf("Erro identificado na linha %d: %s\n", get_line_number(), mensagem);
 }
