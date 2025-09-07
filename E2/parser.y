@@ -56,8 +56,8 @@ lista_de_elementos: lista_de_elementos ',' elemento;	// "[...] elementos da list
 
 
 // "Cada elemento dessa lista é [...]"
-elemento: definicao_de_funcao;		// "[...] ou uma definição de função [...]"
-elemento: declaracao_de_variavel;	// "[...] ou uma declaração de variável."
+elemento: definicao_de_funcao;						// "[...] ou uma definição de função [...]"
+elemento: declaracao_de_variavel_nao_inicializavel;	// "[...] ou uma declaração de variável."
 
 
 // "Definição de Função: Ela possui um cabeçalho e um corpo."  
@@ -78,10 +78,10 @@ token_decimal_ou_inteiro: TK_DECIMAL | TK_INTEIRO;
 
 
 // "A lista de parâmetros, quando presente, consiste [...] 
-lista_opcional_de_parametros: /*empty*/;									// definição de lista opcional
-lista_opcional_de_parametros: TK_COM lista_nao_vazia_de_parametros;			// "[...] no token opcional TK_COM seguido de uma lista [...] de parâmetros."
-lista_nao_vazia_de_parametros: parametro;									// definição de lista
-lista_nao_vazia_de_parametros: lista_nao_vazia_de_parametros ',' parametro;	// "[...] separada por vírgula [...]"
+lista_opcional_de_parametros: /*empty*/;					// definição de lista opcional
+lista_opcional_de_parametros: TK_COM lista_de_parametros;	// "[...] no token opcional TK_COM seguido de uma lista [...] de parâmetros."
+lista_de_parametros: parametro;								// definição de lista
+lista_de_parametros: lista_de_parametros ',' parametro;		// "[...] separada por vírgula [...]"
 
 
 // "Cada parâmetro consiste [...]" 
@@ -100,11 +100,12 @@ corpo_da_funcao: bloco_de_comandos;
 // ------------------------------------------------------------------ ADIÇÕES FEITAS SEM RODAR O BISON PARA TESTAGEM AINDA ------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
 // "Bloco de Comandos: [...] "  
-bloco_de_comandos: '[' sequencia_opcional_de_comandos_simples ']';	// "[...] Definido entre colchetes [...]"
-sequencia_opcional_de_comandos_simples: /*empty*/; 					// "[...] uma sequência, possivelmente vazia [...]"
+bloco_de_comandos: '[' sequencia_opcional_de_comandos_simples ']';	// "[...] Definido entre colchetes [...] uma sequência [...]"
+sequencia_opcional_de_comandos_simples: /*empty*/; 					// "[...] possivelmente vazia [...]"
 sequencia_opcional_de_comandos_simples: comando_simples;			// "[...] de comandos simples."
-sequencia_opcional_de_comandos_simples: sequencia_opcional_de_comandos_simples comando_simples; // DÚVIDA: sem separador entre comandos simples?
+sequencia_opcional_de_comandos_simples: sequencia_opcional_de_comandos_simples comando_simples; // Dúvida: sem separador entre comandos simples?
 
 
 // "Os comandos simples da linguagem podem ser: [...]" 
@@ -116,11 +117,23 @@ comando_simples: comando_de_retorno; 			// "[...] comando de retorno, [...]"
 comando_simples: comando_de_controle_de_fluxo; 	// "[...] e construções de fluxo de controle."
 
 
+// "Declaração de variável: [...] comando simples de declaração de variável, sendo que a [...] diferença é que [...] não pode receber valores de inicialização."
+declaracao_de_variavel_nao_inicializavel: TK_VAR TK_ID TK_ATRIB token_decimal_ou_inteiro;
 
-// "Declaração de variável: Esta declaração é idêntica ao comando simples de declaração de variável, sendo que a única e importante diferença é que esse elemento não pode receber valores de inicialização."
-declaracao_de_variavel: ;
 
-// Declaração de Variável: Consiste no token TK_VAR seguido do token TK_ID, que é por sua vez seguido do token TK_ATRIB e enfim seguido do tipo. O tipo pode ser ou o token TK_DECIMAL ou o token TK_INTEIRO. Uma variável pode ser opcionalmente inicializada caso sua declaração seja seguida do token TK_COM e de um literal. 
+// Declaração de Variável: Consiste [...]" 
+// "[...] no token TK_VAR [...]"
+// "[...] seguido do token TK_ID [...]" 
+// "[...] seguido do token TK_ATRIB [...]" 
+// "[...] seguido do tipo. O tipo pode ser ou o token TK_DECIMAL ou o token TK_INTEIRO." 
+declaracao_de_variavel: TK_VAR TK_ID TK_ATRIB token_decimal_ou_inteiro inicilizacao_opcional_de_variavel;
+
+
+// "Uma variável pode ser [...] inicializada caso [...]" 
+// "[...] seja seguida do token TK_COM [...]"
+// "[...] e de um literal. 
+inicilizacao_opcional_de_variavel: /*empty*/;
+inicilizacao_opcional_de_variavel: TK_COM literal;
 
 
 // "Um literal pode ser [...]"
@@ -128,88 +141,129 @@ literal: TK_LI_INTEIRO;		// "[...] ou o token TK_LI_INTEIRO [...]"
 literal: TK_LI_DECIMAL;		// "[...] ou o token TK_LI_DECIMAL."
 
 
-/*
-Comando de Atribuição: O comando de atribui-
-ção consiste em um token TK_ID, seguido do to-
-ken TK_ATRIB e enfim seguido por uma expres-
-são.
-Chamada de Função: Uma chamada de função
-consiste no token TK_ID, seguida de argumentos
-entre parênteses, sendo que cada argumento é se-
-parado do outro por vírgula. Um argumento é
-uma expressão. Uma chamada de função pode
-existir sem argumentos.
-Comando de Retorno: Trata-se do token
-TK_RETORNA seguido de uma expressão, se-
-guido do token TK_ATRIB e terminado ou pelo
-token TK_DECIMAL ou pelo token TK_INTEIRO.
-Comandos de Controle de Fluxo: A lingua-
-gem possui uma construção condicional e uma
-construção iterativa para controle estruturado de
-fluxo. A condicional consiste no token TK_SE se-
-guido de uma expressão entre parênteses e en-
-tão por um bloco de comandos obrigatório. Após
-este bloco, podemos opcionalmente ter o token
-TK_SENAO que, quando aparece, é seguido obri-
-gatoriamente por um bloco de comandos. Temos
-apenas uma construção de repetição que é o to-
-ken TK_ENQUANTO seguido de uma expressão en-
-tre parênteses e de um bloco de comandos.
+// "Comando de Atribuição: O comando de atribuição consiste [...]" 
+// "[...] em um token TK_ID [...]"
+// "[...] seguido do token TK_ATRIB [...]" 
+// "[...] seguido por uma expressão.
+comando_de_atribuicao: TK_ID TK_ATRIB expressao;
 
-Expressões envolvem operandos e operadores,
-sendo este opcional. Os operandos podem ser
-identificadores, literais e chamada de função ou
-outras expressões, podendo portanto ser formadas
-recursivamente pelo emprego de operadores. Elas
-também permitem o uso de parênteses para forçar
-uma associatividade ou precedência diferente da-
-quela tradicional. A associatividade é à esquerda
-(portanto implemente recursão à esquerda nas re-
-gras gramaticais). Os operadores são os seguintes:
-• Unários prefixados
-– + número positivo
-– - inverte o sinal
-– ! negação lógica
-• Binários infixados
-– + soma
-– - subtração
-– * multiplicação
-– / divisão
-– % resto da divisão inteira
-– operadores compostos
-As regras de associatividade e precedência de
-operadores matemáticos são aquelas tradicionais
-de linguagem de programação e da matemática.
-Pode-se usar esta referência da Linguagem C. Para
-facilitar, abaixo temos uma tabela com uma vi-
-são somente com os operadores de nossa lingua-
-gem. Recomenda-se fortemente que tais regras se-
-jam incorporadas na solução desta etapa através
-de construções gramaticais (evitando totalmente o
-emprego das diretivas %left %right do bison).
-Precedência Op. Aridade
-0 Chamada de Função
-TK_ID
-TK_LI_INTEIRO
-TK_LI_DECIMAL
-( expressão )
-1 + Unária
-- Unária
-! Unária
-2 * Binária
-/ Binária
-% Binária
-3 + Binária
-- Binária
-4 < Binária
-> Binária
-TK_OC_LE Binária
-TK_OC_GE Binária
-5 TK_OC_EQ Binária
-TK_OC_NE Binária
-6 & Binária
-7 | Binária
+
+// "Chamada de Função: Uma chamada de função consiste [...]"
+// "[...] no token TK_ID [...]" 
+// "[...] seguida de argumentos entre parênteses [...]"
+chamada_de_funcao: TK_ID '(' sequencia_opcional_de_argumentos ')';
+sequencia_opcional_de_argumentos: /*empty*/;										// "[...] pode existir sem argumentos."
+sequencia_opcional_de_argumentos: argumento;										// definição de sequência
+sequencia_opcional_de_argumentos: sequencia_opcional_de_argumentos ',' argumento;	// "[...] cada argumento é separado do outro por vírgula."
+argumento: expressao; 																// "Um argumento é uma expressão."
+// Dúvida: definição de argumento desnecessária? Já que "argumento == expressão" sempre
+
+
+// "Comando de Retorno: Trata-se do [...]
+// "[...] token TK_RETORNA [...]"
+// "[...] seguido de uma expressão [...]"
+// "[...] seguido do token TK_ATRIB [...]"
+// "[...] terminado ou pelo token TK_DECIMAL ou pelo token TK_INTEIRO."
+comando_de_retorno: TK_RETORNA expressao TK_ATRIB token_decimal_ou_inteiro;
+
+
+// "Comandos de Controle de Fluxo: A linguagem possui uma construção condicional e uma construção iterativa para controle estruturado de fluxo."
+comando_de_controle_de_fluxo: construcao_condicional | construcao_iterativa;
+
+
+// A condicional consiste [...]"
+// "[...] no token TK_SE [...]"
+// "[...] seguido de uma expressão entre parênteses [...]"
+// "[...] e então por um bloco de comandos obrigatório." 
+construcao_condicional: TK_SE '(' expressao ')' bloco_de_comandos senao_opcional;
+senao_opcional: /*empty*/;						// "[...] opcionalmente [...]"
+senao_opcional: TK_SENAO bloco_de_comandos; 	// "[...] token TK_SENAO [...] seguido [...] por um bloco de comandos."
+
+
+// "[...] construção de repetição é [...]" 
+// "[...] o token TK_ENQUANTO [...]"
+// "[...] seguido de uma expressão entre parênteses [...]" 
+// "[...] e de um bloco de comandos."
+construcao_iterativa: TK_ENQUANTO '(' expressao ')' bloco_de_comandos;
+
+
+// "Expressões envolvem [...]"
+expressao: operador_unario_opcional operando_nao_recursivo;  	// "[...] operadores [...] opcional."
+expressao: '(' expressao ')';									// "[...] parênteses para [...] associatividade ou precedência diferente [...]"				
+expressao: expressao operador_binario operando_nao_recursivo;	// "A associatividade é à esquerda [...] portanto [...] recursão à esquerda [...]"
+// Dúvida: uma sequência de operadores unários como "+-inteiro" é válida?
+// Dúvida: uma sequência de operadores binários e unários como "inteiro+-inteiro" é válida?
+
+
+// "Os operandos podem ser [...]"
+// "[...] identificadores [...]"
+// "[...] literais [...]"
+// "[...] chamada de função [...]"
+operando_nao_recursivo: TK_ID | literal | chamada_de_funcao;
+
+
+// "Os operadores são os seguintes: [...]"
+// "[...] Unários prefixados [...]"
+operador_unario_opcional: /*empty*/ | '+' | '-' | '!';
+// "[...] Binários infixados [...]"
+operador_binario: '*' | '/' | '%' | '+' | '-' | '<' | '>' | TK_OC_LE | TK_OC_GE | TK_OC_EQ | TK_OC_NE | '&' | '|';
+
+/* 
+	Todas as construções de expressões esperadas pelo programa:
+		TK_ID 	
+		literal 
+		chamada_de_funcao 
+		'(' operando ')'	 
+		'+' operando
+		'-' operando
+		'!' operando
+		operando '*' operando
+		operando '/' operando
+		operando '%' operando
+		operando '+' operando
+		operando '-' operando
+		operando '<' operando
+		operando '>' operando
+		operando TK_OC_LE operando
+		operando TK_OC_GE operando
+		operando TK_OC_EQ operando
+		operando TK_OC_NE operando
+		operando '&' operando
+		operando '|' operando
+	Obs: atualmente, sequência de operadores entre ou antes de operandos não é permitida pela gramática.
 */
+
+// As regras de associatividade e precedência [...] são aquelas tradicionais de linguagem de programação e da matemática.
+operador_precedencia_1: '+' | '-' | '!'; 					// unária
+operador_por_nivel_de_precedencia_2: '*' | '/' | '%'; 					// binária
+operador_por_nivel_de_precedencia_3: '+' | '-' ; 						// binária
+operador_por_nivel_de_precedencia_4: '<' | '>' | TK_OC_LE | TK_OC_GE; 	// binária
+operador_por_nivel_de_precedencia_5: TK_OC_EQ | TK_OC_NE; 				// binária
+operador_por_nivel_de_precedencia_6: '&'; 								// binária
+operador_por_nivel_de_precedencia_7: '|'; 								// binária
+
+expressao_precedencia_6:
+expressao_precedencia_7: expressao_precedencia_6 | expressao_precedencia_6 '|' expressao_precedencia_6;
+
+
+Expression : Term;
+Expression : Expression ('+' | '-') Term;
+
+Term : Factor;
+Term : Term ('*' | '/') Factor;
+
+expressao_precedencia_7 : expressao_precedencia_0 | expressao_precedencia_0 operador_precedencia_7 expressao_precedencia_0;
+expressao_precedencia_6 : expressao_precedencia_7 | expressao_precedencia_7 operador_precedencia_6 expressao_precedencia_7;
+expressao_precedencia_5 : expressao_precedencia_6 | expressao_precedencia_6 operador_precedencia_5 expressao_precedencia_6;
+expressao_precedencia_4 : expressao_precedencia_5 | expressao_precedencia_5 operador_precedencia_4 expressao_precedencia_5;
+expressao_precedencia_3 : expressao_precedencia_4 | expressao_precedencia_4 operador_precedencia_3 expressao_precedencia_4;
+
+expressao_precedencia_2 : expressao_precedencia_3 | expressao_precedencia_2 operador_precedencia_2 expressao_precedencia_3;
+
+expressao_precedencia_1 : expressao_precedencia_2 | operador_precedencia_1 expressao_precedencia_2;	// não aceita 2 operadores unários seguidos
+
+expressao_precedencia_0 : operando_nao_recursivo  | expressao_precedencia_1 | '(' expressao_precedencia_0 ')';
+
 
 %%
 
