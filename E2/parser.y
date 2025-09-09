@@ -42,7 +42,6 @@ int get_line_number(void);
 //
 //		2. "Lista" / "Sequência" "opcional" de "elementos":
 //				lista: /*empty*/;		// lista ou sequência vazia
-//				lista: elemento;		// lista ou sequência contendo apenas 1 elemento ou final da recursão
 //				lista: lista elemento;	// recursão à esquerda dos elementos 
 //			- Adição de separador de elementos ou de sinalizador de final de lista a critério da definição (omitido se não especificado).
 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -95,17 +94,11 @@ parametro: TK_ID TK_ATRIB token_decimal_ou_inteiro;
 corpo_da_funcao: bloco_de_comandos;
 
 
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------ ADIÇÕES FEITAS SEM RODAR O BISON PARA TESTAGEM AINDA ------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 // "Bloco de Comandos: [...] "  
-bloco_de_comandos: '[' sequencia_opcional_de_comandos_simples ']';	// "[...] Definido entre colchetes [...] uma sequência [...]"
-sequencia_opcional_de_comandos_simples: /*empty*/; 					// "[...] possivelmente vazia [...]"
-sequencia_opcional_de_comandos_simples: comando_simples;			// "[...] de comandos simples."
-sequencia_opcional_de_comandos_simples: sequencia_opcional_de_comandos_simples comando_simples; // Dúvida: sem separador entre comandos simples?
+bloco_de_comandos: '[' sequencia_opcional_de_comandos_simples ']';								// "[...] Definido entre colchetes [...] uma sequência [...]"
+sequencia_opcional_de_comandos_simples: /*empty*/; 												// "[...] possivelmente vazia [...]"			
+sequencia_opcional_de_comandos_simples: sequencia_opcional_de_comandos_simples comando_simples;	// "[...] de comandos simples."
+// Dúvida: sem separador entre comandos simples?
 
 
 // "Os comandos simples da linguagem podem ser: [...]" 
@@ -153,10 +146,8 @@ comando_de_atribuicao: TK_ID TK_ATRIB expressao;
 // "[...] seguida de argumentos entre parênteses [...]"
 chamada_de_funcao: TK_ID '(' sequencia_opcional_de_argumentos ')';
 sequencia_opcional_de_argumentos: /*empty*/;										// "[...] pode existir sem argumentos."
-sequencia_opcional_de_argumentos: argumento;										// definição de sequência
 sequencia_opcional_de_argumentos: sequencia_opcional_de_argumentos ',' argumento;	// "[...] cada argumento é separado do outro por vírgula."
 argumento: expressao; 																// "Um argumento é uma expressão."
-// Dúvida: definição de argumento desnecessária? Já que "argumento == expressão" sempre
 
 
 // "Comando de Retorno: Trata-se do [...]
@@ -185,6 +176,14 @@ senao_opcional: TK_SENAO bloco_de_comandos; 	// "[...] token TK_SENAO [...] segu
 // "[...] seguido de uma expressão entre parênteses [...]" 
 // "[...] e de um bloco de comandos."
 construcao_iterativa: TK_ENQUANTO '(' expressao ')' bloco_de_comandos;
+
+
+
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------ ADIÇÕES FEITAS SEM RODAR O BISON PARA TESTAGEM AINDA ------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 // "Expressões envolvem [...]"
@@ -234,35 +233,37 @@ operador_binario: '*' | '/' | '%' | '+' | '-' | '<' | '>' | TK_OC_LE | TK_OC_GE 
 */
 
 // As regras de associatividade e precedência [...] são aquelas tradicionais de linguagem de programação e da matemática.
-operador_precedencia_1: '+' | '-' | '!'; 					// unária
-operador_por_nivel_de_precedencia_2: '*' | '/' | '%'; 					// binária
-operador_por_nivel_de_precedencia_3: '+' | '-' ; 						// binária
-operador_por_nivel_de_precedencia_4: '<' | '>' | TK_OC_LE | TK_OC_GE; 	// binária
-operador_por_nivel_de_precedencia_5: TK_OC_EQ | TK_OC_NE; 				// binária
-operador_por_nivel_de_precedencia_6: '&'; 								// binária
-operador_por_nivel_de_precedencia_7: '|'; 								// binária
+operador_pre_1: '+' | '-' | '!'; 					// unária
+operador_pre_2: '*' | '/' | '%'; 					// binária
+operador_pre_3: '+' | '-' ; 						// binária
+operador_pre_4: '<' | '>' | TK_OC_LE | TK_OC_GE; 	// binária
+operador_pre_5: TK_OC_EQ | TK_OC_NE; 				// binária
+operador_pre_6: '&'; 								// binária
+operador_pre_7: '|'; 								// binária
 
-expressao_precedencia_6:
-expressao_precedencia_7: expressao_precedencia_6 | expressao_precedencia_6 '|' expressao_precedencia_6;
+// expressões de nível de precedência 0
+expressao_precedencia_0: operando_nao_recursivo;
+expressao_precedencia_0: '(' expressao_precedencia_0 ')';
+expressao_precedencia_0: expressao_precedencia_1;
+
+// expressões de nível de precedência 1
+expressao_precedencia_1: operador_pre_1 expressao_precedencia_2;	// não aceita 2 operadores unários seguidos
+expressao_precedencia_1: expressao_precedencia_2;
+
+// expressões de nível de precedência 2
+expressao_precedencia_2: expressao_precedencia_3;
+expressao_precedencia_2: expressao_precedencia_2 operador_pre_2 expressao_precedencia_3;
 
 
-Expression : Term;
-Expression : Expression ('+' | '-') Term;
 
-Term : Factor;
-Term : Term ('*' | '/') Factor;
+expressao_precedencia_7: expressao_precedencia_0 | expressao_precedencia_0 operador_precedencia_7 expressao_precedencia_0;
+expressao_precedencia_6: expressao_precedencia_7 | expressao_precedencia_7 operador_precedencia_6 expressao_precedencia_7;
+expressao_precedencia_5: expressao_precedencia_6 | expressao_precedencia_6 operador_precedencia_5 expressao_precedencia_6;
+expressao_precedencia_4: expressao_precedencia_5 | expressao_precedencia_5 operador_precedencia_4 expressao_precedencia_5;
+expressao_precedencia_3: expressao_precedencia_4 | expressao_precedencia_4 operador_precedencia_3 expressao_precedencia_4;
 
-expressao_precedencia_7 : expressao_precedencia_0 | expressao_precedencia_0 operador_precedencia_7 expressao_precedencia_0;
-expressao_precedencia_6 : expressao_precedencia_7 | expressao_precedencia_7 operador_precedencia_6 expressao_precedencia_7;
-expressao_precedencia_5 : expressao_precedencia_6 | expressao_precedencia_6 operador_precedencia_5 expressao_precedencia_6;
-expressao_precedencia_4 : expressao_precedencia_5 | expressao_precedencia_5 operador_precedencia_4 expressao_precedencia_5;
-expressao_precedencia_3 : expressao_precedencia_4 | expressao_precedencia_4 operador_precedencia_3 expressao_precedencia_4;
 
-expressao_precedencia_2 : expressao_precedencia_3 | expressao_precedencia_2 operador_precedencia_2 expressao_precedencia_3;
 
-expressao_precedencia_1 : expressao_precedencia_2 | operador_precedencia_1 expressao_precedencia_2;	// não aceita 2 operadores unários seguidos
-
-expressao_precedencia_0 : operando_nao_recursivo  | expressao_precedencia_1 | '(' expressao_precedencia_0 ')';
 
 
 %%
