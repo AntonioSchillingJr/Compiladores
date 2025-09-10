@@ -145,9 +145,11 @@ comando_de_atribuicao: TK_ID TK_ATRIB expressao;
 // "[...] no token TK_ID [...]" 
 // "[...] seguida de argumentos entre parênteses [...]"
 chamada_de_funcao: TK_ID '(' sequencia_opcional_de_argumentos ')';
-sequencia_opcional_de_argumentos: /*empty*/;										// "[...] pode existir sem argumentos."
-sequencia_opcional_de_argumentos: sequencia_opcional_de_argumentos ',' argumento;	// "[...] cada argumento é separado do outro por vírgula."
-argumento: expressao; 																// "Um argumento é uma expressão."
+sequencia_opcional_de_argumentos: /*empty*/;	
+sequencia_opcional_de_argumentos: sequencia_de_argumentos;		// "[...] pode existir sem argumentos."
+sequencia_de_argumentos: argumento;								// definição de sequência
+sequencia_de_argumentos: sequencia_de_argumentos ',' argumento;	// "[...] cada argumento é separado do outro por vírgula."
+argumento: expressao; 											// "Um argumento é uma expressão."
 
 
 // "Comando de Retorno: Trata-se do [...]
@@ -177,36 +179,6 @@ senao_opcional: TK_SENAO bloco_de_comandos; 	// "[...] token TK_SENAO [...] segu
 // "[...] e de um bloco de comandos."
 construcao_iterativa: TK_ENQUANTO '(' expressao ')' bloco_de_comandos;
 
-
-
-
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------ ADIÇÕES FEITAS SEM RODAR O BISON PARA TESTAGEM AINDA ------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-// "Expressões envolvem [...]"
-expressao: operador_unario_opcional operando_nao_recursivo;  	// "[...] operadores [...] opcional."
-expressao: '(' expressao ')';									// "[...] parênteses para [...] associatividade ou precedência diferente [...]"				
-expressao: expressao operador_binario operando_nao_recursivo;	// "A associatividade é à esquerda [...] portanto [...] recursão à esquerda [...]"
-// Dúvida: uma sequência de operadores unários como "+-inteiro" é válida?
-// Dúvida: uma sequência de operadores binários e unários como "inteiro+-inteiro" é válida?
-
-
-// "Os operandos podem ser [...]"
-// "[...] identificadores [...]"
-// "[...] literais [...]"
-// "[...] chamada de função [...]"
-operando_nao_recursivo: TK_ID | literal | chamada_de_funcao;
-
-
-// "Os operadores são os seguintes: [...]"
-// "[...] Unários prefixados [...]"
-operador_unario_opcional: /*empty*/ | '+' | '-' | '!';
-// "[...] Binários infixados [...]"
-operador_binario: '*' | '/' | '%' | '+' | '-' | '<' | '>' | TK_OC_LE | TK_OC_GE | TK_OC_EQ | TK_OC_NE | '&' | '|';
-
 /* 
 	Todas as construções de expressões esperadas pelo programa:
 		TK_ID 	
@@ -229,8 +201,32 @@ operador_binario: '*' | '/' | '%' | '+' | '-' | '<' | '>' | TK_OC_LE | TK_OC_GE 
 		operando TK_OC_NE operando
 		operando '&' operando
 		operando '|' operando
-	Obs: atualmente, sequência de operadores entre ou antes de operandos não é permitida pela gramática.
+	
+	Dúvida: uma sequência de operadores unários como "+-inteiro" é válida?
+	Dúvida: uma sequência de operadores binários e unários como "inteiro+-inteiro" é válida?
+	Obs: atualmente, sequência de operadores não é permitida pela gramática.
 */
+
+// "Expressões envolvem [...]"
+expressao: expressao_precedencia_0;
+// expressao: operador_unario_opcional operando_nao_recursivo;  	// "[...] operadores [...] opcional."
+// expressao: '(' expressao ')';									// "[...] parênteses para [...] associatividade ou precedência diferente [...]"				
+// expressao: expressao operador_binario operando_nao_recursivo;	// "A associatividade é à esquerda [...] portanto [...] recursão à esquerda [...]"
+
+
+// "Os operandos podem ser [...]"
+// "[...] identificadores [...]"
+// "[...] literais [...]"
+// "[...] chamada de função [...]"
+operando_nao_recursivo: TK_ID | literal | chamada_de_funcao;
+
+
+// "Os operadores são os seguintes: [...]"
+// "[...] Unários prefixados [...]"
+// operador_unario_opcional: /*empty*/ | '+' | '-' | '!';
+// "[...] Binários infixados [...]"
+// operador_binario: '*' | '/' | '%' | '+' | '-' | '<' | '>' | TK_OC_LE | TK_OC_GE | TK_OC_EQ | TK_OC_NE | '&' | '|';
+
 
 // As regras de associatividade e precedência [...] são aquelas tradicionais de linguagem de programação e da matemática.
 operador_pre_1: '+' | '-' | '!'; 					// unária
@@ -243,7 +239,7 @@ operador_pre_7: '|'; 								// binária
 
 // expressões de nível de precedência 0
 expressao_precedencia_0: operando_nao_recursivo;
-expressao_precedencia_0: '(' expressao_precedencia_0 ')';
+// expressao_precedencia_0: '(' expressao_precedencia_0 ')';
 expressao_precedencia_0: expressao_precedencia_1;
 
 // expressões de nível de precedência 1
@@ -254,13 +250,34 @@ expressao_precedencia_1: expressao_precedencia_2;
 expressao_precedencia_2: expressao_precedencia_3;
 expressao_precedencia_2: expressao_precedencia_2 operador_pre_2 expressao_precedencia_3;
 
+// expressões de nível de precedência 3
+expressao_precedencia_3: expressao_precedencia_4;
+expressao_precedencia_3: expressao_precedencia_3 operador_pre_3 expressao_precedencia_4;
+
+// expressões de nível de precedência 4
+expressao_precedencia_4: expressao_precedencia_5;
+expressao_precedencia_4: expressao_precedencia_4 operador_pre_4 expressao_precedencia_5;
+
+// expressões de nível de precedência 5
+expressao_precedencia_5: expressao_precedencia_6;
+expressao_precedencia_5: expressao_precedencia_5 operador_pre_5 expressao_precedencia_6;
+
+// expressões de nível de precedência 6
+expressao_precedencia_6: expressao_precedencia_7;
+expressao_precedencia_6: expressao_precedencia_6 operador_pre_6 expressao_precedencia_7;
 
 
-expressao_precedencia_7: expressao_precedencia_0 | expressao_precedencia_0 operador_precedencia_7 expressao_precedencia_0;
-expressao_precedencia_6: expressao_precedencia_7 | expressao_precedencia_7 operador_precedencia_6 expressao_precedencia_7;
-expressao_precedencia_5: expressao_precedencia_6 | expressao_precedencia_6 operador_precedencia_5 expressao_precedencia_6;
-expressao_precedencia_4: expressao_precedencia_5 | expressao_precedencia_5 operador_precedencia_4 expressao_precedencia_5;
-expressao_precedencia_3: expressao_precedencia_4 | expressao_precedencia_4 operador_precedencia_3 expressao_precedencia_4;
+expressao_precedencia_7: TK_DECIMAL; // placeholder
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------ FALTA ADICIONAR RECURSÃO PARA EXPRESSÕES A PARTIR DO NÍVEL 7 ------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+// expressões de nível de precedência 7
+// expressao_precedencia_7: '(' operando_nao_recursivo ')';
+// expressao_precedencia_7: expressao_precedencia_7 operador_pre_7 operando_nao_recursivo;
 
 
 
