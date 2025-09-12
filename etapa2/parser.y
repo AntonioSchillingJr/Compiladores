@@ -1,3 +1,5 @@
+/* Grupo S */
+/* Antônio Schilling e Arthur Amaral */
 
 %{
 #include<stdio.h>

@@ -1,3 +1,6 @@
+/* Grupo S */
+/* Antônio Schilling e Arthur Amaral */
+
 %{
 #include "parser.tab.h"
 %}

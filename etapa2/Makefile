@@ -1,3 +1,6 @@
+# Grupo S
+# Antônio Schilling e Arthur Amaral
+
 CC := gcc
 LEX := flex
 YACC := bison
@@ -7,15 +10,12 @@ EXE := etapa2
 
 all: $(EXE)
 
-# Gera parser.tab.c e parser.tab.h com relatório detalhado em parser.output
 parser.tab.c parser.tab.h: parser.y
 	$(YACC) -d --report=all --report-file=parser.output parser.y
 
-# Gera o scanner (usa parser.tab.h pelos tokens)
 lex.yy.c: scanner.l parser.tab.h
 	$(LEX) scanner.l
 
-# Compilação
 parser.tab.o: parser.tab.c
 	$(CC) $(CFLAGS) -c $<
 
