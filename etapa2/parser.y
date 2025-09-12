@@ -38,7 +38,7 @@ elemento: declaracao_variavel_sem_init | definicao_funcao;
 declaracao_variavel_sem_init: TK_VAR TK_ID TK_ATRIB tipo ;
 declaracao_variavel: declaracao_variavel_sem_init | declaracao_variavel_sem_init TK_COM literal_tipo ;
 cabecalho_funcao: TK_ID TK_SETA tipo param_opt TK_ATRIB ;
-param_opt: %empty | TK_COM lista_param ;
+param_opt: %empty | lista_param | TK_COM lista_param ;
 lista_param: TK_ID TK_ATRIB tipo | lista_param ',' TK_ID TK_ATRIB tipo ;
 bloco_de_comandos: '[' lista_comandos_opt ']' ;
 lista_comandos_opt: %empty | lista_comandos ;

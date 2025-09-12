@@ -1,7 +1,6 @@
 ex_func1
  -> 
  inteiro
- com
  ex_parametro_sem_com_e_virgula 
  := 
  inteiro := [
