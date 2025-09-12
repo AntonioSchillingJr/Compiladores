@@ -32,6 +32,6 @@ clean:
 	rm -f *.o lex.yy.c parser.tab.c parser.tab.h parser.output $(EXE)
 
 run: $(EXE)
-	./$(EXE) < input.txt
+	./$(EXE) < input.txt ; echo $$?
 
 .PHONY: all clean run
