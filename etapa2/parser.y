@@ -38,10 +38,10 @@ programa: %empty 							/* "[...] lista opcional de elementos." */
 lista: elemento | lista ',' elemento ; 		/* "[...] elementos da lista são separados pelo operador vírgula [...]" */
 
 /* "Cada elemento dessa lista é [...]" */
-elemento: declaracao_variavel_sem_init 		/* "[...] ou uma definição de função [...]" */
-		| definicao_funcao;					/* "[...] ou uma declaração de variável." */
+elemento: declaracao_variavel_sem_init 		/* "[...] ou uma declaração de variável [...]" */
+		| definicao_funcao;					/* "[...] ou uma definição de função [...]" */
 
-/* "Definição de Função: Ela possui um cabeçalho e um corpo." */
+/* "Definição de Função: Ela possui um cabeçalho e um corpo. O corpo de uma função é um bloco de comandos" */
 definicao_funcao: cabecalho_funcao bloco_de_comandos ;
 
 /* "Declaração de variável: [...] comando simples de declaração de variável, sendo que a [...] diferença é que [...] não pode receber valores de inicialização." */
@@ -52,6 +52,7 @@ declaracao_variavel_sem_init: TK_VAR TK_ID TK_ATRIB tipo ;
 /* "[...] seguido do token TK_ID [...]" */
 /* "[...] seguido do token TK_ATRIB [...]" */
 /* "[...] seguido do tipo. O tipo pode ser ou o token TK_DECIMAL ou o token TK_INTEIRO." */
+/* "[...] Uma variável pode ser opcionalmente inicializada caso sua declaração seja seguida do token TK_COM e de um literal." */
 declaracao_variavel: declaracao_variavel_sem_init | declaracao_variavel_sem_init TK_COM literal_tipo ;
 
 /* "O cabeçalho consiste [...]" */
@@ -130,16 +131,28 @@ literal_tipo: TK_LI_DECIMAL 	/* "[...] ou o token TK_LI_DECIMAL." */
 expr: expr_or ;
 
 /* "[...] Binários infixados [...]" */
+/* nível 7: | */
 expr_or: expr_or '|' expr_and | expr_and ;
+
+/* nível 6: & */
 expr_and: expr_and '&' expr_eq | expr_eq ;
+
+/* nível 5: == != */
 expr_eq: expr_eq TK_OC_EQ expr_rel | expr_eq TK_OC_NE expr_rel | expr_rel ;
+
+/* nível 4: < > <= >= */
 expr_rel: expr_rel '<' expr_add | expr_rel '>' expr_add
         | expr_rel TK_OC_LE expr_add | expr_rel TK_OC_GE expr_add
         | expr_add ;
+
+/* nível 3: + - */
 expr_add: expr_add '+' expr_mul | expr_add '-' expr_mul | expr_mul ;
+
+/* nível 2: * / % */
 expr_mul: expr_mul '*' expr_un | expr_mul '/' expr_un | expr_mul '%' expr_un | expr_un ;
 
 /* "[...] Unários prefixados [...]" */
+/* nível 1: + - ! */
 expr_un: '+' expr_un | '-' expr_un | '!' expr_un | expr_zero ;
 
 /* "Os operandos podem ser [...]" */
@@ -147,6 +160,8 @@ expr_un: '+' expr_un | '-' expr_un | '!' expr_un | expr_zero ;
 /* "[...] literais [...]" */
 /* "[...] chamada de função [...]" */
 /* "[...] ou outras expressões [...]" */
+/* "[...] Elas também permitem o uso de parênteses para forçar uma associatividade ou precedência diferente daquela tradicional." */
+/* nível 0: operandos e () */
 expr_zero: chamada_funcao | TK_ID | TK_LI_INTEIRO | TK_LI_DECIMAL | '(' expr ')' ;
 
 %%
