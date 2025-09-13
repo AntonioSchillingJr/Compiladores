@@ -157,13 +157,13 @@ expr_mul: expr_mul '*' expr_un | expr_mul '/' expr_un | expr_mul '%' expr_un | e
 expr_un: '+' expr_un | '-' expr_un | '!' expr_un | expr_zero ;
 
 /* "Os operandos podem ser [...]" */
+/* "[...] chamada de função [...]" */
 /* "[...] identificadores [...]" */
 /* "[...] literais [...]" */
-/* "[...] chamada de função [...]" */
 /* "[...] ou outras expressões [...]" */
 /* "[...] Elas também permitem o uso de parênteses para forçar uma associatividade ou precedência diferente daquela tradicional." */
 /* nível 0: operandos e () */
-expr_zero: chamada_funcao | TK_ID | TK_LI_INTEIRO | TK_LI_DECIMAL | '(' expr ')' ;
+expr_zero: chamada_funcao | TK_ID | literal_tipo | '(' expr ')' ;
 
 %%
 void yyerror (char const *mensagem) {
