@@ -112,6 +112,7 @@ retorno: TK_RETORNA expr TK_ATRIB tipo ;
 /* "[...] no token TK_SE [...]" */
 /* "[...] seguido de uma expressão entre parênteses [...]" */
 /* "[...] e então por um bloco de comandos obrigatório." */
+/* "[...] podemos opcionalmente ter o token TK_SENAO [...] seguido obrigatoriamente por um bloco de comandos." */
 comando_se: TK_SE '(' expr ')' bloco_de_comandos | TK_SE '(' expr ')' bloco_de_comandos TK_SENAO bloco_de_comandos ;
 
 /* "[...] construção de repetição é [...]" */
