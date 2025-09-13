@@ -33,13 +33,13 @@ int get_line_number(void);
 %%
 
 /* "Um programa na linguagem é composto por [...]" */
-programa: %empty 							/* "[...] lista opcional de elementos." */
-        | lista ';' ;						/* "[...] a lista é terminada pelo operador ponto-e-vírgula." */
-lista: elemento | lista ',' elemento ; 		/* "[...] elementos da lista são separados pelo operador vírgula [...]" */
+programa: %empty                            /* "[...] lista opcional de elementos." */
+        | lista ';' ;                       /* "[...] a lista é terminada pelo operador ponto-e-vírgula." */
+lista: elemento | lista ',' elemento ;      /* "[...] elementos da lista são separados pelo operador vírgula [...]" */
 
 /* "Cada elemento dessa lista é [...]" */
-elemento: declaracao_variavel_sem_init 		/* "[...] ou uma declaração de variável [...]" */
-        | definicao_funcao;					/* "[...] ou uma definição de função [...]" */
+elemento: declaracao_variavel_sem_init      /* "[...] ou uma declaração de variável [...]" */
+        | definicao_funcao;                 /* "[...] ou uma definição de função [...]" */
 
 /* "Definição de Função: Ela possui um cabeçalho e um corpo. O corpo de uma função é um bloco de comandos" */
 definicao_funcao: cabecalho_funcao bloco_de_comandos ;
@@ -64,26 +64,26 @@ declaracao_variavel: declaracao_variavel_sem_init | declaracao_variavel_sem_init
 cabecalho_funcao: TK_ID TK_SETA tipo param_opt TK_ATRIB ;
 
 /* "A lista de parâmetros, quando presente, consiste [...] */
-param_opt: %empty | lista_param | TK_COM lista_param ;	/* "[...] no token opcional TK_COM seguido de uma lista [...] de parâmetros." */
+param_opt: %empty | lista_param | TK_COM lista_param ;  /* "[...] no token opcional TK_COM seguido de uma lista [...] de parâmetros." */
 
 /* "Cada parâmetro consiste [...]" */
 /* "[...] no token TK_ID [...]" */
 /* "[...] seguido do token TK_ATRIB [...]" */
 /* "[...] seguido ou do token TK_INTEIRO ou do token TK_DECIMAL." */
-lista_param: TK_ID TK_ATRIB tipo | lista_param ',' TK_ID TK_ATRIB tipo ;	/* "[...] separada por vírgula [...]" */
+lista_param: TK_ID TK_ATRIB tipo | lista_param ',' TK_ID TK_ATRIB tipo ;    /* "[...] separada por vírgula [...]" */
 
 /* "Bloco de Comandos: [...] " */
-bloco_de_comandos: '[' lista_comandos_opt ']' ;						/* "[...] Definido entre colchetes [...] uma sequência [...]" */
-lista_comandos_opt: %empty | lista_comandos ;						/* "[...] possivelmente vazia [...]" */
-lista_comandos: comando_simples | lista_comandos comando_simples ;	/* "[...] de comandos simples." */
+bloco_de_comandos: '[' lista_comandos_opt ']' ;                     /* "[...] Definido entre colchetes [...] uma sequência [...]" */
+lista_comandos_opt: %empty | lista_comandos ;                       /* "[...] possivelmente vazia [...]" */
+lista_comandos: comando_simples | lista_comandos comando_simples ;  /* "[...] de comandos simples." */
 
 /* "Os comandos simples da linguagem podem ser: [...]" */
-comando_simples: bloco_de_comandos		/* "[...] bloco de comandos, [...]" */
-               | declaracao_variavel	/* "[...] declaração de variável, [...]" */
-               | atribuicao				/* "[...] comando de atribuição, [...]" */
-               | chamada_funcao			/* "[...] chamada de função, [...]" */
-               | retorno				/* "[...] comando de retorno, [...]" */
-               | comando_se				/* "[...] e construções de fluxo de controle." */
+comando_simples: bloco_de_comandos      /* "[...] bloco de comandos, [...]" */
+               | declaracao_variavel    /* "[...] declaração de variável, [...]" */
+               | atribuicao             /* "[...] comando de atribuição, [...]" */
+               | chamada_funcao         /* "[...] chamada de função, [...]" */
+               | retorno                /* "[...] comando de retorno, [...]" */
+               | comando_se             /* "[...] e construções de fluxo de controle." */
                | comando_enquanto ;
 
 /* "Comando de Atribuição: O comando de atribuição consiste [...]" */
@@ -96,9 +96,9 @@ atribuicao: TK_ID TK_ATRIB expr ;
 /* "[...] no token TK_ID [...]" */
 /* "[...] seguida de argumentos entre parênteses [...]" */
 chamada_funcao: TK_ID '(' args ')' ;
-args: %empty 			/* "[...] pode existir sem argumentos." */
-    | expr 				/* "Um argumento é uma expressão." */
-    | args ',' expr ;	/* "[...] cada argumento é separado do outro por vírgula." */
+args: %empty            /* "[...] pode existir sem argumentos." */
+    | expr              /* "Um argumento é uma expressão." */
+    | args ',' expr ;   /* "[...] cada argumento é separado do outro por vírgula." */
 
 /* "Comando de Retorno: Trata-se do [...] */
 /* "[...] token TK_RETORNA [...]" */
@@ -125,8 +125,8 @@ comando_enquanto: TK_ENQUANTO '(' expr ')' bloco_de_comandos ;
 tipo: TK_DECIMAL | TK_INTEIRO ;
 
 /* "Um literal pode ser [...]" */
-literal_tipo: TK_LI_DECIMAL 	/* "[...] ou o token TK_LI_DECIMAL." */
-            | TK_LI_INTEIRO ;	/* "[...] ou o token TK_LI_INTEIRO [...]" */
+literal_tipo: TK_LI_DECIMAL     /* "[...] ou o token TK_LI_DECIMAL." */
+            | TK_LI_INTEIRO ;   /* "[...] ou o token TK_LI_INTEIRO [...]" */
 
 /* "Expressões envolvem [...]" */
 expr: expr_or ;
