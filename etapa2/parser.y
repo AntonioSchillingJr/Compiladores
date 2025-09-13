@@ -167,5 +167,5 @@ expr_zero: chamada_funcao | TK_ID | literal_tipo | '(' expr ')' ;
 
 %%
 void yyerror (char const *mensagem) {
-    fprintf(stderr, "Erro sintático na linha %d: %s\n", get_line_number(), mensagem);
+    fprintf(stderr, "Erro na linha %d: %s\n", get_line_number(), mensagem);
 }
