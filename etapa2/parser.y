@@ -34,12 +34,12 @@ int get_line_number(void);
 
 /* "Um programa na linguagem é composto por [...]" */
 programa: %empty 							/* "[...] lista opcional de elementos." */
-		| lista ';' ;						/* "[...] a lista é terminada pelo operador ponto-e-vírgula." */
+        | lista ';' ;						/* "[...] a lista é terminada pelo operador ponto-e-vírgula." */
 lista: elemento | lista ',' elemento ; 		/* "[...] elementos da lista são separados pelo operador vírgula [...]" */
 
 /* "Cada elemento dessa lista é [...]" */
 elemento: declaracao_variavel_sem_init 		/* "[...] ou uma declaração de variável [...]" */
-		| definicao_funcao;					/* "[...] ou uma definição de função [...]" */
+        | definicao_funcao;					/* "[...] ou uma definição de função [...]" */
 
 /* "Definição de Função: Ela possui um cabeçalho e um corpo. O corpo de uma função é um bloco de comandos" */
 definicao_funcao: cabecalho_funcao bloco_de_comandos ;
@@ -98,7 +98,7 @@ atribuicao: TK_ID TK_ATRIB expr ;
 chamada_funcao: TK_ID '(' args ')' ;
 args: %empty 			/* "[...] pode existir sem argumentos." */
     | expr 				/* "Um argumento é uma expressão." */
-	| args ',' expr ;	/* "[...] cada argumento é separado do outro por vírgula." */
+    | args ',' expr ;	/* "[...] cada argumento é separado do outro por vírgula." */
 
 /* "Comando de Retorno: Trata-se do [...] */
 /* "[...] token TK_RETORNA [...]" */
@@ -126,7 +126,7 @@ tipo: TK_DECIMAL | TK_INTEIRO ;
 
 /* "Um literal pode ser [...]" */
 literal_tipo: TK_LI_DECIMAL 	/* "[...] ou o token TK_LI_DECIMAL." */
-			| TK_LI_INTEIRO ;	/* "[...] ou o token TK_LI_INTEIRO [...]" */
+            | TK_LI_INTEIRO ;	/* "[...] ou o token TK_LI_INTEIRO [...]" */
 
 /* "Expressões envolvem [...]" */
 expr: expr_or ;
