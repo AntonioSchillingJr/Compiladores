@@ -95,10 +95,10 @@ atribuicao: TK_ID TK_ATRIB expr ;
 /* "Chamada de Função: Uma chamada de função consiste [...]" */
 /* "[...] no token TK_ID [...]" */
 /* "[...] seguida de argumentos entre parênteses [...]" */
-chamada_funcao: TK_ID '(' args ')' ;
-args: %empty            /* "[...] pode existir sem argumentos." */
-    | expr              /* "Um argumento é uma expressão." */
-    | args ',' expr ;   /* "[...] cada argumento é separado do outro por vírgula." */
+chamada_funcao: TK_ID '(' args_opt ')';	
+args_opt: %empty | args;       /* "[...] pode existir sem argumentos." */
+args: expr                     /* "Um argumento é uma expressão." */
+    | args ',' expr;           /* "[...] cada argumento é separado do outro por vírgula." */
 
 /* "Comando de Retorno: Trata-se do [...] */
 /* "[...] token TK_RETORNA [...]" */
