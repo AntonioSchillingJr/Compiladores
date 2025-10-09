@@ -189,9 +189,9 @@ args_opt
 
 args
   : expr            { $$ = $1; }
-  | args ',' expr   {
-      if ($1) { asd_add_child($1, $3); $$ = $1; }
-      else $$ = $3;
+  | expr ',' args   {
+      $$ = $1;
+      if ($3) asd_add_child($$, $3);
     }
   ;
 
