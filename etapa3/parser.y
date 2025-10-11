@@ -113,7 +113,7 @@ lista_param
 /* ---------- Bloco e comandos ---------- */
 
 bloco_de_comandos
-  : '[' lista_comandos_opt ']' { $$ = $2 ? $2 : asd_new(""); }
+  : '[' lista_comandos_opt ']' { $$ = $2; }
   ;
 
 lista_comandos_opt
