@@ -6,8 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-static valor_lexico* mk_val(int line, int kind, const char* yytext) {
-    valor_lexico* v = (valor_lexico*)calloc(1, sizeof(valor_lexico));
+static valor_lexico_t* mk_val(int line, int kind, const char* yytext) {
+    valor_lexico_t* v = (valor_lexico_t*)calloc(1, sizeof(valor_lexico_t));
     v->line = line;
     v->token_kind = kind;
     v->value = strdup(yytext); 

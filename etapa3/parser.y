@@ -23,18 +23,18 @@
     int   line;
     int   token_kind;
     char  *value;
-  } valor_lexico;
+  } valor_lexico_t;
 }
 
 %code {
-  static inline void free_val(valor_lexico* v){
+  static inline void free_val(valor_lexico_t* v){
     if (v) { free(v->value); free(v); }
   }
 }
 
 %union {
-  valor_lexico *valor_lexico; /* TK_ID e literais */
-  asd_tree_t   *nodo;       /* nodo da AST para não-terminais */
+  valor_lexico_t *valor_lexico; /* TK_ID e literais */
+  asd_tree_t     *nodo;         /* nodo da AST para não-terminais */
 }
 
 /* Apenas IDs e literais tem valor */
