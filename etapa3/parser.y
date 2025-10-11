@@ -34,7 +34,7 @@
 
 %union {
   valor_lexico *valor_lexico; /* TK_ID e literais */
-  asd_tree_t     *nodo;       /* nodo da AST para não-terminais */
+  asd_tree_t   *nodo;       /* nodo da AST para não-terminais */
 }
 
 /* Apenas IDs e literais tem valor */
@@ -102,6 +102,7 @@ tipo
 
 param_opt
   : %empty                     { $$ = NULL; }
+  | lista_param                { $$ = NULL; }
   | TK_COM lista_param         { $$ = NULL; }
   ;
 
@@ -124,7 +125,7 @@ lista_comandos_opt
 lista_comandos
   : comando_simples            { $$ = $1; }
   | comando_simples lista_comandos {
-      if ($1){ asd_add_child($1, $2); $$ = $1; }
+      if ($1){ if ($2) asd_add_child($1, $2); $$ = $1; }
       else $$ = $2;
     }
   ;
@@ -190,8 +191,8 @@ args_opt
 args
   : expr            { $$ = $1; }
   | expr ',' args   {
-      $$ = $1;
-      if ($3) asd_add_child($$, $3);
+      if ($1){ $$ = $1; if ($3) asd_add_child($$, $3); }
+      else $$ = $3;
     }
   ;
 
@@ -230,29 +231,29 @@ comando_enquanto
 
 /* ---------- Expressões ---------- */
 
-expr        : expr_or ;
-expr_or     : expr_or '|' expr_and      { $$ = asd_new("|");  asd_add_child($$, $1); asd_add_child($$, $3); }
+expr        : expr_or { $$ = $1; } ;
+expr_or     : expr_or '|' expr_and      { $$ = asd_new("|");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
             | expr_and                  { $$ = $1; } ;
-expr_and    : expr_and '&' expr_eq      { $$ = asd_new("&");  asd_add_child($$, $1); asd_add_child($$, $3); }
+expr_and    : expr_and '&' expr_eq      { $$ = asd_new("&");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
             | expr_eq                   { $$ = $1; } ;
-expr_eq     : expr_eq TK_OC_EQ expr_rel { $$ = asd_new("=="); asd_add_child($$, $1); asd_add_child($$, $3); }
-            | expr_eq TK_OC_NE expr_rel { $$ = asd_new("!="); asd_add_child($$, $1); asd_add_child($$, $3); }
+expr_eq     : expr_eq TK_OC_EQ expr_rel { $$ = asd_new("=="); if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
+            | expr_eq TK_OC_NE expr_rel { $$ = asd_new("!="); if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
             | expr_rel                  { $$ = $1; } ;
-expr_rel    : expr_rel '<' expr_add     { $$ = asd_new("<");  asd_add_child($$, $1); asd_add_child($$, $3); }
-            | expr_rel '>' expr_add     { $$ = asd_new(">");  asd_add_child($$, $1); asd_add_child($$, $3); }
-            | expr_rel TK_OC_LE expr_add{ $$ = asd_new("<="); asd_add_child($$, $1); asd_add_child($$, $3); }
-            | expr_rel TK_OC_GE expr_add{ $$ = asd_new(">="); asd_add_child($$, $1); asd_add_child($$, $3); }
+expr_rel    : expr_rel '<' expr_add     { $$ = asd_new("<");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
+            | expr_rel '>' expr_add     { $$ = asd_new(">");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
+            | expr_rel TK_OC_LE expr_add{ $$ = asd_new("<="); if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
+            | expr_rel TK_OC_GE expr_add{ $$ = asd_new(">="); if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
             | expr_add                  { $$ = $1; } ;
-expr_add    : expr_add '+' expr_mul     { $$ = asd_new("+");  asd_add_child($$, $1); asd_add_child($$, $3); }
-            | expr_add '-' expr_mul     { $$ = asd_new("-");  asd_add_child($$, $1); asd_add_child($$, $3); }
+expr_add    : expr_add '+' expr_mul     { $$ = asd_new("+");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
+            | expr_add '-' expr_mul     { $$ = asd_new("-");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
             | expr_mul                  { $$ = $1; } ;
-expr_mul    : expr_mul '*' expr_un      { $$ = asd_new("*");  asd_add_child($$, $1); asd_add_child($$, $3); }
-            | expr_mul '/' expr_un      { $$ = asd_new("/");  asd_add_child($$, $1); asd_add_child($$, $3); }
-            | expr_mul '%' expr_un      { $$ = asd_new("%");  asd_add_child($$, $1); asd_add_child($$, $3); }
+expr_mul    : expr_mul '*' expr_un      { $$ = asd_new("*");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
+            | expr_mul '/' expr_un      { $$ = asd_new("/");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
+            | expr_mul '%' expr_un      { $$ = asd_new("%");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
             | expr_un                   { $$ = $1; } ;
-expr_un     : '+' expr_un               { $$ = asd_new("+");  asd_add_child($$, $2); }
-            | '-' expr_un               { $$ = asd_new("-");  asd_add_child($$, $2); }
-            | '!' expr_un               { $$ = asd_new("!");  asd_add_child($$, $2); }
+expr_un     : '+' expr_un               { $$ = asd_new("+");  if ($2) asd_add_child($$, $2); }
+            | '-' expr_un               { $$ = asd_new("-");  if ($2) asd_add_child($$, $2); }
+            | '!' expr_un               { $$ = asd_new("!");  if ($2) asd_add_child($$, $2); }
             | expr_zero                 { $$ = $1; } ;
 expr_zero   : chamada_funcao            { $$ = $1; }
             | TK_ID                     { $$ = asd_new($1->value); free_val($1); }

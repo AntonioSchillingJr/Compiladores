@@ -53,11 +53,11 @@ com { return TK_COM; }
 := { return TK_ATRIB; }
 -> { return TK_SETA; }
 
- /* Identificadores */
+ /* Identificadores = 1 */
 
 [a-z_][a-z0-9_]* { yylval.valor_lexico = mk_val(yylineno, 1, yytext); return TK_ID; }
 
- /* Literais */
+ /* Literais = 2 */
 
 [0-9]+ { yylval.valor_lexico = mk_val(yylineno, 2, yytext); return TK_LI_INTEIRO; }
 [0-9]*\.[0-9]+ { yylval.valor_lexico = mk_val(yylineno, 2, yytext); return TK_LI_DECIMAL; }

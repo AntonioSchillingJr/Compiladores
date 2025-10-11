@@ -4,7 +4,7 @@
 CC      := gcc
 LEX     := flex
 YACC    := bison
-CFLAGS  := -Wall -Wextra -Werror -fsanitize=address
+CFLAGS  := -Wall -Werror -fsanitize=address
 
 EXE := etapa3
 
@@ -23,7 +23,7 @@ parser.tab.o: parser.tab.c
 	$(CC) $(CFLAGS) -c $<
 
 lex.yy.o: lex.yy.c
-	$(CC) $(CFLAGS) -Wno-sign-compare -c $<
+	$(CC) $(CFLAGS) -c $<
 
 main.o: main.c parser.tab.h asd.h
 	$(CC) $(CFLAGS) -c $<
