@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Constrói o valor léxico para TK_ID e literais.
+   token_kind: 1 = identificador, 2 = literal */
 static valor_lexico_t* mk_val(int line, int kind, const char* yytext) {
     valor_lexico_t* v = (valor_lexico_t*)calloc(1, sizeof(valor_lexico_t));
     v->line = line;

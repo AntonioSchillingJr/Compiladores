@@ -7,6 +7,7 @@
   #include <string.h>
   #include "asd.h"
   
+  /* Raiz global da AST */
   extern asd_tree_t *arvore;
 
   int yylex(void);
@@ -44,7 +45,7 @@
 %token TK_TIPO TK_VAR TK_SENAO TK_DECIMAL TK_SE TK_INTEIRO TK_ATRIB TK_RETORNA
 %token TK_SETA TK_ENQUANTO TK_COM TK_OC_LE TK_OC_GE TK_OC_EQ TK_OC_NE TK_ER
 
-/* Tipagem de não-terminais que retornam nós */
+/* Tipagem de não-terminais que retornam nodos */
 %type <nodo> programa lista elemento
 %type <nodo> definicao_funcao cabecalho_funcao bloco_de_comandos lista_comandos lista_comandos_opt
 %type <nodo> comando_simples declaracao_variavel declaracao_variavel_sem_init atribuicao
@@ -61,6 +62,7 @@ programa
   | lista ';'                  { arvore = $1; $$ = $1; }
   ;
 
+/* Lista: função aponta para a próxima como filho extra */
 lista
   : elemento                     { $$ = $1; }
   | elemento ',' lista           {
@@ -83,29 +85,32 @@ elemento
 
 definicao_funcao
   : cabecalho_funcao bloco_de_comandos {
-      if ($2) asd_add_child($1, $2);
+      if ($2) asd_add_child($1, $2); /* filho 0: primeiro comando do corpo */
       $$ = $1;
     }
   ;
 
 cabecalho_funcao
   : TK_ID TK_SETA tipo param_opt TK_ATRIB {
-      $$ = asd_new($1->value);
+      $$ = asd_new($1->value); /* nome do nodo = lexema do identificador */
       free_val($1);
     }
   ;
 
+/* Tipos não geram nodos */
 tipo
   : TK_DECIMAL                 { $$ = NULL; }
   | TK_INTEIRO                 { $$ = NULL; }
   ;
 
+/* Parametros opcionais não geram nodos */
 param_opt
   : %empty                     { $$ = NULL; }
   | lista_param                { $$ = NULL; }
   | TK_COM lista_param         { $$ = NULL; }
   ;
 
+/* Lista de parâmetros: ignoramos na AST, só damos free na memória */
 lista_param
   : TK_ID TK_ATRIB tipo                 { free_val($1); $$ = NULL; }
   | lista_param ',' TK_ID TK_ATRIB tipo { free_val($3); $$ = NULL; }
@@ -114,7 +119,7 @@ lista_param
 /* ---------- Bloco e comandos ---------- */
 
 bloco_de_comandos
-  : '[' lista_comandos_opt ']' { $$ = $2; }
+  : '[' lista_comandos_opt ']' { $$ = $2; } /* retorna o 1º comando da lista (ou NULL) */
   ;
 
 lista_comandos_opt
@@ -122,6 +127,7 @@ lista_comandos_opt
   | lista_comandos             { $$ = $1; }
   ;
 
+/* Lista de comandos: comando -> próximo comando */
 lista_comandos
   : comando_simples            { $$ = $1; }
   | comando_simples lista_comandos {
@@ -142,10 +148,12 @@ comando_simples
 
 /* ---------- Declarações ---------- */
 
+/* Declaração global não entra na AST, só damos free na memória */
 declaracao_variavel_sem_init
   : TK_VAR TK_ID TK_ATRIB tipo { free_val($2); $$ = NULL; }
   ;
 
+/* Declaração local com inicialização: cria nodo "com" (nome, literal) */
 declaracao_variavel
   : declaracao_variavel_sem_init               { $$ = NULL; }
   | TK_VAR TK_ID TK_ATRIB tipo TK_COM literal_tipo {
@@ -156,6 +164,7 @@ declaracao_variavel
     }
   ;
 
+/* Literais -> nodo folha com o lexema */
 literal_tipo
   : TK_LI_DECIMAL               { $$ = asd_new($1->value); free_val($1); }
   | TK_LI_INTEIRO               { $$ = asd_new($1->value); free_val($1); }
@@ -166,8 +175,8 @@ literal_tipo
 atribuicao
   : TK_ID TK_ATRIB expr         {
       $$ = asd_new(":=");
-      asd_add_child($$, asd_new($1->value));
-      if ($3) asd_add_child($$, $3);
+      asd_add_child($$, asd_new($1->value)); /* filho 0: nome */
+      if ($3) asd_add_child($$, $3); /* filho 1: expressão */
       free_val($1);
     }
   ;
@@ -176,9 +185,9 @@ atribuicao
 
 chamada_funcao
   : TK_ID '(' args_opt ')'          {
-      char buf[1024]; snprintf(buf, sizeof(buf), "call %s", $1->value);
+      char buf[1024]; snprintf(buf, sizeof(buf), "call %s", $1->value); /* nome do nodo = "call <id>" */
       $$ = asd_new(buf);
-      if ($3) asd_add_child($$, $3);
+      if ($3) asd_add_child($$, $3); /* filho 0: primeira expressão/argumento (possivel lista) */
       free_val($1);
     }
   ;
@@ -188,10 +197,11 @@ args_opt
   | args            { $$ = $1; }
   ;
 
+/* Lista de argumentos */
 args
   : expr            { $$ = $1; }
   | expr ',' args   {
-      if ($1){ $$ = $1; if ($3) asd_add_child($$, $3); }
+      if ($1){ $$ = $1; if ($3) asd_add_child($$, $3); } /* cabeça é o 1º argumento e encadeia o resto como filho */
       else $$ = $3;
     }
   ;
@@ -210,28 +220,30 @@ retorno
 comando_se
   : TK_SE '(' expr ')' bloco_de_comandos {
       $$ = asd_new("se");
-      if ($3) asd_add_child($$, $3);
-      if ($5) asd_add_child($$, $5);
+      if ($3) asd_add_child($$, $3); /* condição */
+      if ($5) asd_add_child($$, $5); /* bloco do se */
     }
   | TK_SE '(' expr ')' bloco_de_comandos TK_SENAO bloco_de_comandos {
       $$ = asd_new("se");
-      if ($3) asd_add_child($$, $3);
-      if ($5) asd_add_child($$, $5);
-      if ($7) asd_add_child($$, $7);
+      if ($3) asd_add_child($$, $3); /* condição */
+      if ($5) asd_add_child($$, $5); /* bloco do se */
+      if ($7) asd_add_child($$, $7); /* bloco do senao opcional */
     }
   ;
 
 comando_enquanto
   : TK_ENQUANTO '(' expr ')' bloco_de_comandos {
       $$ = asd_new("enquanto");
-      if ($3) asd_add_child($$, $3);
-      if ($5) asd_add_child($$, $5);
+      if ($3) asd_add_child($$, $3); /* condição */
+      if ($5) asd_add_child($$, $5); /* corpo */
     }
   ;
 
-/* ---------- Expressões ---------- */
+/* ---------- Expressões (obedecendo associatividade e precedência) ---------- */
 
 expr        : expr_or { $$ = $1; } ;
+
+/* Operadores binários com pelo menos 2 filhos */
 expr_or     : expr_or '|' expr_and      { $$ = asd_new("|");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
             | expr_and                  { $$ = $1; } ;
 expr_and    : expr_and '&' expr_eq      { $$ = asd_new("&");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
@@ -251,15 +263,19 @@ expr_mul    : expr_mul '*' expr_un      { $$ = asd_new("*");  if ($1) asd_add_ch
             | expr_mul '/' expr_un      { $$ = asd_new("/");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
             | expr_mul '%' expr_un      { $$ = asd_new("%");  if ($1) asd_add_child($$, $1); if ($3) asd_add_child($$, $3); }
             | expr_un                   { $$ = $1; } ;
+
+/* Operadores unários com pelo menos 1 filho */
 expr_un     : '+' expr_un               { $$ = asd_new("+");  if ($2) asd_add_child($$, $2); }
             | '-' expr_un               { $$ = asd_new("-");  if ($2) asd_add_child($$, $2); }
             | '!' expr_un               { $$ = asd_new("!");  if ($2) asd_add_child($$, $2); }
             | expr_zero                 { $$ = $1; } ;
-expr_zero   : chamada_funcao            { $$ = $1; }
-            | TK_ID                     { $$ = asd_new($1->value); free_val($1); }
-            | TK_LI_INTEIRO             { $$ = asd_new($1->value); free_val($1); }
-            | TK_LI_DECIMAL             { $$ = asd_new($1->value); free_val($1); }
-            | '(' expr ')'              { $$ = $2; } ;
+
+
+expr_zero   : chamada_funcao            { $$ = $1; } /* call ... */
+            | TK_ID                     { $$ = asd_new($1->value); free_val($1); } /* id */
+            | TK_LI_INTEIRO             { $$ = asd_new($1->value); free_val($1); } /* inteiro */
+            | TK_LI_DECIMAL             { $$ = asd_new($1->value); free_val($1); } /* decimal */
+            | '(' expr ')'              { $$ = $2; } ; /* () para forçar associatividade/precedência */
 %%
 
 void yyerror (char const *mensagem) {
