@@ -9,6 +9,32 @@ size_t Symbol_string_length(const char *_source) {
     return length + 1;
 }
 
+bool Symbol_is_string_equal_to(const char *_string1, const char *_string2) {
+    
+    size_t length1 = Symbol_string_length(_string1);
+    size_t length2 = Symbol_string_length(_string2);
+
+    if (length1 != length2) {
+        return false;
+    }
+
+    for (size_t i = 0; i < length1; i++) {
+        if (_string1[i] != _string2[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Symbol_compare_key(Symbol *_symbol1, Symbol *_symbol2) {
+    return Symbol_is_string_equal_to(_symbol1->key, _symbol2->key);
+}
+
+bool Symbol_is_key_equal_to_string(Symbol *_symbol, const char *_key) {
+    return Symbol_is_string_equal_to(_symbol->key, _key);
+}
+
 void Symbol_set_key(Symbol *_symbol, const char *_source) {
     size_t source_length = Symbol_string_length(_source);
     for (size_t i = 0; i < source_length; i++) {
@@ -52,26 +78,65 @@ Symbol *Symbol_destroy(Symbol *_symbol) {
 }
 
 bool Symbol_is_null(Symbol *_symbol) {
-    return _symbol == NULL;
+    return (_symbol == NULL);
+}
+
+void Symbol_println(Symbol *_symbol) {
+    if (_symbol == NULL) {
+        printf("Null\n");
+    } 
+    else {
+        printf("[");
+        printf("Key: \"%s\", ", _symbol->key);
+        printf("Line: %d, ", _symbol->line);
+        printf("Nature: %d, ", _symbol->nature);
+        printf("Type: %d, ", _symbol->type);
+        printf("Value: \"%s\"", _symbol->value);
+        printf("]\n");
+    }
 }
 
 void Symbol_print(Symbol *_symbol) {
-    printf("[");
-    printf("Key: \"%s\", ", _symbol->key);
-    printf("Line: %d, ", _symbol->line);
-    printf("Nature: %d, ", _symbol->nature);
-    printf("Type: %d, ", _symbol->type);
-    printf("Value: \"%s\"", _symbol->value);
-    printf("]\n");
+    if (_symbol == NULL) {
+        printf("Null");
+    } 
+    else {
+        printf("[");
+        printf("Key: \"%s\", ", _symbol->key);
+        printf("Line: %d, ", _symbol->line);
+        printf("Nature: %d, ", _symbol->nature);
+        printf("Type: %d, ", _symbol->type);
+        printf("Value: \"%s\"", _symbol->value);
+        printf("]");
+    }
 }
 
 void Symbol_test_implementation() {
     printf("--------------- Tests for %s implementation: Running now ---------------\n", __FILE__);
-        Symbol *symbol_test = Symbol_create("KeyTest", 1, 10, 100, "ValueTest");
-        Symbol_print(symbol_test);
+        char key_test[] = "KeyTest";
+        char key_test_2[] = "KeyTest2";  
+        char value_test[] = "ValueTest"; 
+
+        Symbol *symbol_test = Symbol_create(key_test, 1, 10, 100, value_test);
+        Symbol_println(symbol_test);
+
+        printf("Comparing \"%s\" to \"%s\": %s\n", 
+            symbol_test->key,
+            key_test,
+            bool_to_string(Symbol_is_key_equal_to_string(symbol_test, key_test)));
+        printf("Comparing \"%s\" to \"%s\": %s\n", 
+            symbol_test->key,
+            key_test_2,
+            bool_to_string(Symbol_is_key_equal_to_string(symbol_test, key_test_2)));
+        
         Symbol_set_key(symbol_test, "SymbolAnotherKeyTest");
-        Symbol_print(symbol_test);
+        Symbol_println(symbol_test);
+        printf("Comparing \"%s\" to \"%s\": %s\n", 
+            symbol_test->key,
+            key_test,
+            bool_to_string(Symbol_is_key_equal_to_string(symbol_test, key_test)));
+        
         symbol_test = Symbol_destroy(symbol_test);
-        printf("%s\n", (Symbol_is_null(symbol_test) ? "Destroyed." : "Not destroyed."));
+        printf("Pointer state after destroy operation: %s.\n", is_nullified_string(symbol_test));
     printf("--------------- Tests for %s implementation: Ended ---------------\n", __FILE__);
 }
