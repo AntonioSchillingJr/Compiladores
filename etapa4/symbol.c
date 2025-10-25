@@ -2,6 +2,11 @@
 
 
 size_t Symbol_string_length(const char *_source) {
+
+    if (_source == NULL) {
+        return 0;
+    }
+
     size_t length = 0;
     while ((_source[length] != '\0') && (length < (SYMBOL_MAX_SIZE - 1))) {
         length++;
@@ -28,14 +33,27 @@ bool Symbol_is_string_equal_to(const char *_string1, const char *_string2) {
 }
 
 bool Symbol_compare_key(Symbol *_symbol1, Symbol *_symbol2) {
+    if ((_symbol1 == NULL) || (_symbol2 == NULL)) {
+        return (_symbol1 == _symbol2);
+    }
+
     return Symbol_is_string_equal_to(_symbol1->key, _symbol2->key);
 }
 
 bool Symbol_is_key_equal_to_string(Symbol *_symbol, const char *_key) {
-    return Symbol_is_string_equal_to(_symbol->key, _key);
+    return ((_symbol != NULL) && Symbol_is_string_equal_to(_symbol->key, _key));
 }
 
 void Symbol_set_key(Symbol *_symbol, const char *_source) {
+
+    if (_symbol == NULL) {
+        return;
+    }
+
+    if (_source == NULL) {
+        _symbol->key[0] = '\0';
+    }
+
     size_t source_length = Symbol_string_length(_source);
     for (size_t i = 0; i < source_length; i++) {
         _symbol->key[i] = _source[i];
@@ -47,6 +65,16 @@ void Symbol_set_key(Symbol *_symbol, const char *_source) {
 }
 
 void Symbol_set_value(Symbol *_symbol, const char *_source) {
+
+    if (_symbol == NULL) {
+        return;
+    }
+
+    if (_source == NULL) {
+        _symbol->value[0] = '\0';
+    }
+
+
     size_t source_length = Symbol_string_length(_source);
     for (size_t i = 0; i < source_length; i++) {
         _symbol->value[i] = _source[i];
