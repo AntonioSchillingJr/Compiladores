@@ -8,6 +8,7 @@
 #include "utils.h"
 
 #define SYMBOL_MAX_SIZE 50  // padronizando tamanho maximo dos buffers utilizados
+#define SYMBOL_MAX_PARAMS 32
 
 /**
  * @brief uma entrada da "tabela" de simbolos
@@ -17,9 +18,13 @@ typedef struct Symbol {
     int line;
     int nature;
     int type;
-    char value[SYMBOL_MAX_SIZE]; 
+    char value[SYMBOL_MAX_SIZE];
+    int param_count;
+    int param_types[SYMBOL_MAX_PARAMS];
 } Symbol;
 
+void Symbol_init_params(Symbol *s);
+void Symbol_add_param(Symbol *s, int param_type);
 size_t Symbol_string_length(const char *_source);
 bool Symbol_is_string_equal_to(const char *_string1, const char *_string2);
 bool Symbol_compare_key(Symbol *_symbol1, Symbol *_symbol2);

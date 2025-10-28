@@ -1,4 +1,5 @@
 #include "symbol.h"
+#include "semantics.h"
 
 
 size_t Symbol_string_length(const char *_source) {
@@ -93,6 +94,7 @@ Symbol *Symbol_create(const char *_key, int _line, int _nature, int _type, const
     new_symbol->nature = _nature;
     new_symbol->type = _type;
     Symbol_set_value(new_symbol, _value);
+    Symbol_init_params(new_symbol);
 
     return new_symbol;
 }
@@ -167,4 +169,17 @@ void Symbol_test_implementation() {
         symbol_test = Symbol_destroy(symbol_test);
         printf("Pointer state after destroy operation: %s.\n", is_nullified_string(symbol_test));
     printf("--------------- Tests for %s implementation: Ended ---------------\n", __FILE__);
+}
+
+void Symbol_init_params(Symbol *s){
+    if (!s) return;
+    s->param_count = 0;
+    for (int i=0;i<SYMBOL_MAX_PARAMS;i++) s->param_types[i] = TYPE_UNTYPED;
+}
+
+void Symbol_add_param(Symbol *s, int param_type){
+    if (!s) return;
+    if (s->param_count < SYMBOL_MAX_PARAMS){
+        s->param_types[s->param_count++] = param_type;
+    }
 }

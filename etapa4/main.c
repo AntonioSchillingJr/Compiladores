@@ -1,21 +1,13 @@
-#include "symbol.h"
-#include "symbolnode.h"
-#include "scope.h"
-#include "scopenode.h"
-#include "scopestackhandler.h"
-
-// compilation and execution:
-// gcc -Wall -g -fsanitize=address main.c utils.c symbol.c symbolnode.c scope.c scopenode.c scopestackhandler.c -o etapa4; ./etapa4
-
-extern ScopeStackHandler *scope_stack_handler;
-
-int main() {
-    
-    Symbol_test_implementation();
-    SymbolNode_test_implementation();
-    Scope_test_implementation();
-    Scopenode_test_implementation();
-    ScopeStackHandler_test_implementation();
-
-    return 0;
+#include <stdio.h>
+#include "asd.h"
+extern int yyparse(void);
+extern int yylex_destroy(void);
+asd_tree_t *arvore = NULL;
+int main ()
+{
+  int ret = yyparse();
+  asd_print_graphviz(arvore);
+  asd_free(arvore);
+  yylex_destroy();
+  return ret;
 }
