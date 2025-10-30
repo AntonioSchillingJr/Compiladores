@@ -72,10 +72,6 @@ Symbol *ScopeStackHandler_get_symbol_by_key(const char *_key) {
     return ScopeNode_get_symbol_by_key(scope_stack_handler->scope_stack, _key);
 }
 
-Symbol* ScopeStackHandler_get_symbol_in_current_scope(const char *key) {
-  return Scope_get_symbol_by_key(scope_stack_handler->scope_stack->scope, key);
-}
-
 // destroy handler
 void ScopeStackHandler_end() {
     if (scope_stack_handler != NULL) {

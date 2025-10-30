@@ -17,7 +17,6 @@ void ScopeStackHandler_add_to_global_scope(Symbol *_symbol);
 void ScopeStackHandler_pop_scope();
 bool ScopeStackHandler_is_key_defined_in_current_scope(const char *_key);
 Symbol *ScopeStackHandler_get_symbol_by_key(const char *_key);
-Symbol* ScopeStackHandler_get_symbol_in_current_scope(const char *key);
 void ScopeStackHandler_end();
 void ScopeStackHandler_print();
 void ScopeStackHandler_test_implementation();
