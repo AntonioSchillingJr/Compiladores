@@ -112,8 +112,12 @@ cabecalho_funcao
   : TK_ID TK_SETA tipo
     {
       /* cria/checa símbolo de função no escopo global e abre escopo da função (para parâmetros) */
-      if (ScopeStackHandler_get_symbol_by_key($1->value))
-        sem_error(ERR_DECLARED, "função '%s' (linha %d) já declarada", $1->value, $1->line);
+      Symbol *prev = ScopeStackHandler_get_symbol_by_key($1->value);
+      if (prev) {
+        SEM_error(ERR_DECLARED,
+          "identificador '%s' já declarado (linha %d)",
+          $1->value, prev->line);
+      }
 
       Symbol *f = Symbol_create($1->value, $1->line, NATURE_FUNC, $3, "");
       Symbol_init_params(f);
@@ -148,8 +152,12 @@ param_opt
 /* Lista de parâmetros: ignoramos na AST, só damos free na memória */
 lista_param
   : TK_ID TK_ATRIB tipo {
-      if (ScopeStackHandler_is_key_defined_in_current_scope($1->value))
-        sem_error(ERR_DECLARED, "parâmetro '%s' (linha %d) já declarado", $1->value, $1->line);
+      Symbol *prev = ScopeStackHandler_get_symbol_by_key($1->value);
+      if (prev) {
+        SEM_error(ERR_DECLARED,
+          "parâmetro '%s' já declarado (linha %d)",
+          $1->value, prev->line);
+      }
       Symbol *p = Symbol_create($1->value, $1->line, NATURE_VAR, $3, "");
       ScopeStackHandler_add_symbol_to_current_scope(p);
 
@@ -159,8 +167,12 @@ lista_param
       $$ = NULL;
     }
   | lista_param ',' TK_ID TK_ATRIB tipo {
-      if (ScopeStackHandler_is_key_defined_in_current_scope($3->value))
-        sem_error(ERR_DECLARED, "parâmetro '%s' (linha %d) já declarado", $3->value, $3->line);
+      Symbol *prev = ScopeStackHandler_get_symbol_by_key($3->value);
+      if (prev) {
+        SEM_error(ERR_DECLARED,
+          "parâmetro '%s' já declarado (linha %d)",
+          $3->value, prev->line);
+      }
       Symbol *p = Symbol_create($3->value, $3->line, NATURE_VAR, $5, "");
       ScopeStackHandler_add_symbol_to_current_scope(p);
 
@@ -208,8 +220,12 @@ comando_simples
 /* Declaração global não entra na AST, só damos free na memória */
 declaracao_variavel_sem_init
   : TK_VAR TK_ID TK_ATRIB tipo {
-      if (ScopeStackHandler_is_key_defined_in_current_scope($2->value))
-        sem_error(ERR_DECLARED, "identificador '%s' (linha %d) já declarado", $2->value, $2->line);
+      Symbol *prev = ScopeStackHandler_get_symbol_by_key($2->value);
+      if (prev) {
+        SEM_error(ERR_DECLARED,
+          "identificador '%s' já declarado (linha %d)",
+          $2->value, prev->line);
+      }
       Symbol *s = Symbol_create($2->value, $2->line, NATURE_VAR, $4, "");
       ScopeStackHandler_add_symbol_to_current_scope(s);
       free_val($2);
@@ -221,15 +237,19 @@ declaracao_variavel_sem_init
 declaracao_variavel
   : declaracao_variavel_sem_init { $$ = NULL; }
   | TK_VAR TK_ID TK_ATRIB tipo TK_COM literal_tipo {
-      if (ScopeStackHandler_is_key_defined_in_current_scope($2->value))
-        sem_error(ERR_DECLARED, "identificador '%s' (linha %d) já declarado", $2->value, $2->line);
+      Symbol *prev = ScopeStackHandler_get_symbol_by_key($2->value);
+      if (prev) {
+        SEM_error(ERR_DECLARED,
+          "identificador '%s' já declarado (linha %d)",
+          $2->value, prev->line);
+      }
       Symbol *s = Symbol_create($2->value, $2->line, NATURE_VAR, $4, "");
       ScopeStackHandler_add_symbol_to_current_scope(s);
       $$ = asd_new("com");
       asd_add_child($$, asd_new($2->value));
       asd_add_child($$, $6);
       if ($6->dtype != $4)
-        sem_error(ERR_WRONG_TYPE, "inicialização incompatível: '%s' é %s e literal é %s",
+        SEM_error(ERR_WRONG_TYPE, "inicialização incompatível: '%s' é %s e literal é %s",
           $2->value, ($4==TYPE_INT?"inteiro":"decimal"), ($6->dtype==TYPE_INT?"inteiro":"decimal"));
       $$->dtype = $4;
       free_val($2);
@@ -247,13 +267,13 @@ literal_tipo
 atribuicao
   : TK_ID TK_ATRIB expr {
       Symbol *s = ScopeStackHandler_get_symbol_by_key($1->value);
-      if (!s) sem_error(ERR_UNDECLARED, "identificador '%s' não declarado (linha %d)", $1->value, $1->line);
-      if (s->nature != NATURE_VAR) sem_error(ERR_FUNCTION, "função '%s' usada como variável (linha %d)", $1->value, $1->line);
+      if (!s) SEM_error(ERR_UNDECLARED, "identificador '%s' não declarado", $1->value);
+      if (s->nature != NATURE_VAR) SEM_error(ERR_FUNCTION, "função '%s' usada como variável", $1->value);
       $$ = asd_new(":=");
       asd_add_child($$, asd_new($1->value));
       if ($3) asd_add_child($$, $3);
       if ($3 && $3->dtype != s->type)
-        sem_error(ERR_WRONG_TYPE, "atribuição incompatível: variável '%s' é %s e expressão é %s",
+        SEM_error(ERR_WRONG_TYPE, "atribuição incompatível: variável '%s' é %s e expressão é %s",
           $1->value, s->type==TYPE_INT?"inteiro":"decimal", $3->dtype==TYPE_INT?"inteiro":"decimal");
       $$->dtype = s->type;
       free_val($1);
@@ -266,9 +286,9 @@ atribuicao
 chamada_funcao
   : TK_ID '(' { SEM_args_begin(); } args_opt ')' {
       Symbol *s = ScopeStackHandler_get_symbol_by_key($1->value);
-      if (!s) sem_error(ERR_UNDECLARED, "função '%s' não declarada (linha %d)", $1->value, $1->line);
+      if (!s) SEM_error(ERR_UNDECLARED, "função '%s' não declarada", $1->value);
       if (s->nature != NATURE_FUNC)
-        sem_error(ERR_VARIABLE, "variável '%s' usada como função (linha %d)", $1->value, $1->line);
+        SEM_error(ERR_VARIABLE, "variável '%s' usada como função", $1->value);
 
       char buf[1024]; snprintf(buf, sizeof(buf), "call %s", $1->value);
       $$ = asd_new(buf);
@@ -276,12 +296,12 @@ chamada_funcao
       $$->dtype = s->type;
 
       int got = SEM_args_count();
-      if (got > s->param_count) sem_error(ERR_EXCESS_ARGS, "excesso de argumentos na chamada de '%s'", $1->value);
-      if (got < s->param_count) sem_error(ERR_MISSING_ARGS, "faltam argumentos na chamada de '%s'", $1->value);
+      if (got > s->param_count) SEM_error(ERR_EXCESS_ARGS, "excesso de argumentos na chamada de '%s'", $1->value);
+      if (got < s->param_count) SEM_error(ERR_MISSING_ARGS, "faltam argumentos na chamada de '%s'", $1->value);
       for (int i = 0; i < got; i++) {
         int argt = SEM_args_type_at(got - 1 - i);
         if (argt != s->param_types[i])
-          sem_error(ERR_WRONG_TYPE_ARGS, "tipo do argumento %d incompatível em '%s'", i+1, $1->value);
+          SEM_error(ERR_WRONG_TYPE_ARGS, "tipo do argumento %d incompatível em '%s'", i+1, $1->value);
       }
 
       SEM_args_end();
@@ -313,14 +333,14 @@ retorno
 
       // anotação vs tipo da função
       if ($4 != SEM_current_function_type)
-        sem_error(ERR_WRONG_TYPE,
+        SEM_error(ERR_WRONG_TYPE,
           "retorno anotado (%s) difere do tipo da função (%s)",
           ($4==TYPE_INT ? "inteiro" : "decimal"),
           (SEM_current_function_type==TYPE_INT ? "inteiro" : "decimal"));
 
       // expressão vs tipo da função
       if ($2 && $2->dtype != SEM_current_function_type)
-        sem_error(ERR_WRONG_TYPE,
+        SEM_error(ERR_WRONG_TYPE,
           "retorno incompatível: função retorna %s e expressão é %s",
           (SEM_current_function_type==TYPE_INT ? "inteiro" : "decimal"),
           ($2->dtype==TYPE_INT ? "inteiro" : "decimal"));
@@ -349,7 +369,7 @@ comando_se
       int t_else = $7 ? $7->dtype : TYPE_UNTYPED;
       int t = promote_bin(t_if, t_else);
       if (t < 0) {
-        sem_error(ERR_WRONG_TYPE,
+        SEM_error(ERR_WRONG_TYPE,
           "blocos do if e do else com tipos incompatíveis (%s vs %s)",
           (t_if==TYPE_INT?"inteiro":t_if==TYPE_FLOAT?"decimal":"<sem tipo>"),
           (t_else==TYPE_INT?"inteiro":t_else==TYPE_FLOAT?"decimal":"<sem tipo>")
@@ -376,7 +396,7 @@ expr_or
   : expr_or '|' expr_and {
       int t = promote_bin($1 ? $1->dtype : TYPE_UNTYPED,
                           $3 ? $3->dtype : TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "operador '|' com tipos incompatíveis");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "operador '|' com tipos incompatíveis");
       $$ = asd_new("|");
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
@@ -388,7 +408,7 @@ expr_and
   : expr_and '&' expr_eq {
       int t = promote_bin($1 ? $1->dtype : TYPE_UNTYPED,
                           $3 ? $3->dtype : TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "operador '&' com tipos incompatíveis");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "operador '&' com tipos incompatíveis");
       $$ = asd_new("&");
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
@@ -402,7 +422,7 @@ expr_eq
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '=='");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '=='");
       $$->dtype = t;
     }
   | expr_eq TK_OC_NE expr_rel {
@@ -410,7 +430,7 @@ expr_eq
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '!='");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '!='");
       $$->dtype = t;
     }
   | expr_rel             { $$ = $1; }
@@ -421,7 +441,7 @@ expr_rel
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '<'");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '<'");
       $$->dtype = t;
     }
   | expr_rel '>' expr_add {
@@ -429,7 +449,7 @@ expr_rel
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '>'");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '>'");
       $$->dtype = t;
     }
   | expr_rel TK_OC_LE expr_add {
@@ -437,7 +457,7 @@ expr_rel
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '<='");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '<='");
       $$->dtype = t;
     }
   | expr_rel TK_OC_GE expr_add {
@@ -445,7 +465,7 @@ expr_rel
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '>='");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '>='");
       $$->dtype = t;
     }
   | expr_add             { $$ = $1; }
@@ -456,7 +476,7 @@ expr_add
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '+'");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '+'");
       $$->dtype = t;
     }
   | expr_add '-' expr_mul {
@@ -464,7 +484,7 @@ expr_add
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '-'");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '-'");
       $$->dtype = t;
     }
   | expr_mul             { $$ = $1; }
@@ -475,7 +495,7 @@ expr_mul
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '*'");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '*'");
       $$->dtype = t;
     }
   | expr_mul '/' expr_un {
@@ -483,7 +503,7 @@ expr_mul
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '/'");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '/'");
       $$->dtype = t;
     }
   | expr_mul '%' expr_un {
@@ -491,7 +511,7 @@ expr_mul
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
-      if (t < 0) sem_error(ERR_WRONG_TYPE, "tipos incompatíveis em '%'");
+      if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '%'");
       $$->dtype = t;
     }
   | expr_un              { $$ = $1; }
@@ -509,9 +529,9 @@ expr_zero
   : chamada_funcao            { $$ = $1; }
   | TK_ID {
       Symbol *s = ScopeStackHandler_get_symbol_by_key($1->value);
-      if (!s) sem_error(ERR_UNDECLARED, "identificador '%s' não declarado (linha %d)", $1->value, $1->line);
+      if (!s) SEM_error(ERR_UNDECLARED, "identificador '%s' não declarado", $1->value);
       if (s->nature == NATURE_FUNC)
-        sem_error(ERR_FUNCTION, "função '%s' usada como variável (linha %d)", $1->value, $1->line);
+        SEM_error(ERR_FUNCTION, "função '%s' usada como variável", $1->value);
       $$ = asd_new($1->value);
       $$->dtype = s->type;
       free_val($1);

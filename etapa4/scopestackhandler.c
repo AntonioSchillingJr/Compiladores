@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <stdio.h> 
 #include "scopestackhandler.h"
 
 // global auxiliar para evitar ter que controlar passagem de parametros desnecssarios
@@ -68,6 +70,10 @@ bool ScopeStackHandler_is_key_defined_in_current_scope(const char *_key) {
 // get first symbol that matches key, from any scope of the stack
 Symbol *ScopeStackHandler_get_symbol_by_key(const char *_key) {
     return ScopeNode_get_symbol_by_key(scope_stack_handler->scope_stack, _key);
+}
+
+Symbol* ScopeStackHandler_get_symbol_in_current_scope(const char *key) {
+  return Scope_get_symbol_by_key(scope_stack_handler->scope_stack->scope, key);
 }
 
 // destroy handler
