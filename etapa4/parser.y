@@ -138,7 +138,7 @@ cabecalho_funcao
 
 /* Tipos não geram nodos */
 tipo
-  : TK_DECIMAL { $$ = TYPE_FLOAT; }
+  : TK_DECIMAL { $$ = TYPE_DEC; }
   | TK_INTEIRO { $$ = TYPE_INT; }
   ;
 
@@ -258,7 +258,7 @@ declaracao_variavel
 
 /* Literais -> nodo folha com o lexema */
 literal_tipo
-  : TK_LI_DECIMAL { $$ = set_dtype(asd_new($1->value), TYPE_FLOAT); free_val($1); }
+  : TK_LI_DECIMAL { $$ = set_dtype(asd_new($1->value), TYPE_DEC);   free_val($1); }
   | TK_LI_INTEIRO { $$ = set_dtype(asd_new($1->value), TYPE_INT);   free_val($1); }
   ;
 
@@ -371,8 +371,8 @@ comando_se
       if (t < 0) {
         SEM_error(ERR_WRONG_TYPE,
           "blocos do if e do else com tipos incompatíveis (%s vs %s)",
-          (t_if==TYPE_INT?"inteiro":t_if==TYPE_FLOAT?"decimal":"<sem tipo>"),
-          (t_else==TYPE_INT?"inteiro":t_else==TYPE_FLOAT?"decimal":"<sem tipo>")
+          (t_if==TYPE_INT?"inteiro":t_if==TYPE_DEC?"decimal":"<sem tipo>"),
+          (t_else==TYPE_INT?"inteiro":t_else==TYPE_DEC?"decimal":"<sem tipo>")
         );
       }
     }
@@ -537,7 +537,7 @@ expr_zero
       free_val($1);
     }
   | TK_LI_INTEIRO { $$ = set_dtype(asd_new($1->value), TYPE_INT); free_val($1); }
-  | TK_LI_DECIMAL { $$ = set_dtype(asd_new($1->value), TYPE_FLOAT); free_val($1); }
+  | TK_LI_DECIMAL { $$ = set_dtype(asd_new($1->value), TYPE_DEC); free_val($1); }
   | '(' expr ')'  { $$ = $2; }
   ;
 

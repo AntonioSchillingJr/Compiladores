@@ -13,7 +13,7 @@
 enum {
   TYPE_UNTYPED = 0,
   TYPE_INT     = 1,
-  TYPE_FLOAT   = 2
+  TYPE_DEC     = 2
 };
 
 /* Natures */
@@ -28,7 +28,7 @@ enum {
 extern int     SEM_current_function_type;
 extern Symbol *SEM_current_function;
 
-/* int+int -> int; float+float -> float; misto -> erro */
+/* int+int -> int; decimal+decimal -> decimal; misto -> erro */
 int promote_bin(int a, int b);
 
 /* Infra de erro */

@@ -33,8 +33,8 @@ void SEM_error(int code, const char *fmt, ...)
 int promote_bin(int a, int b) {
   if (a == TYPE_UNTYPED) return b;
   if (b == TYPE_UNTYPED) return a;
-  if (a == TYPE_INT   && b == TYPE_INT)   return TYPE_INT;
-  if (a == TYPE_FLOAT && b == TYPE_FLOAT) return TYPE_FLOAT;
+  if (a == TYPE_INT && b == TYPE_INT) return TYPE_INT;
+  if (a == TYPE_DEC && b == TYPE_DEC) return TYPE_DEC;
   return -1; /* incompatível */
 }
 
