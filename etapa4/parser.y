@@ -365,8 +365,8 @@ comando_se
       if ($7) asd_add_child($$, $7);
       $$->dtype = $3?$3->dtype:TYPE_UNTYPED;
 
-      int t_if   = $5 ? $5->dtype : TYPE_UNTYPED;
-      int t_else = $7 ? $7->dtype : TYPE_UNTYPED;
+      int t_if   = $5 ? $5->dtype : TYPE_INT;
+      int t_else = $7 ? $7->dtype : TYPE_INT;
       int t = promote_bin(t_if, t_else);
       if (t < 0) {
         SEM_error(ERR_WRONG_TYPE,

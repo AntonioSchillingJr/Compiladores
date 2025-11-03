@@ -1,45 +1,30 @@
 # Grupo S
 # Antônio Schilling e Arthur Amaral
 
-# Compiladores e ferramentas
 CC      := gcc
 LEX     := flex
 YACC    := bison
 
-# Flags de compilação
 CFLAGS  := -Wall -Werror # -fsanitize=address
 
-# Executável final
 EXE := etapa4
 
-# Objetos
 OBJS := main.o parser.tab.o lex.yy.o asd.o \
         symbol.o symbolnode.o scope.o scopenode.o scopestackhandler.o \
 		semantics.o utils.o
 
-# =========================
-# Alvo padrão
-# =========================
 all: $(EXE)
 
 $(EXE): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-# =========================
-# Geração de parser (Bison)
-# =========================
+# Geração do parser
 parser.tab.c parser.tab.h: parser.y
 	$(YACC) -d -Wall -Wcounterexamples --report=all --report-file=parser.output parser.y
 
-# =========================
-# Geração de scanner (Flex)
-# =========================
+# Geração do scanner
 lex.yy.c: scanner.l parser.tab.h
 	$(LEX) scanner.l
-
-# =========================
-# Regras individuais de compilação
-# =========================
 
 # Fontes da etapa 3
 asd.o: asd.c asd.h
@@ -79,9 +64,7 @@ semantics.o: semantics.c semantics.h errors.h asd.h symbol.h scopestackhandler.h
 utils.o: utils.c utils.h
 	$(CC) $(CFLAGS) -c $<
 
-# =========================
 # Utils
-# =========================
 clean:
 	rm -f *.o lex.yy.c parser.tab.c parser.tab.h parser.output $(EXE)
 
