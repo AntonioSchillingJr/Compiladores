@@ -6,6 +6,7 @@
 #include "list.h"
 #include "label.h"
 #include "ilocinstruction.h"
+#include "iloccode.h"
 
 /*
 compilation:
@@ -28,6 +29,7 @@ int main() {
     List_test_implementation();
     Label_test_implementation();
     ILOCInstruction_test_implementation();
+    ILOCCode_test_implementation();
 
     return 0;
 }
