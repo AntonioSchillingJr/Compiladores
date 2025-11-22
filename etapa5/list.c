@@ -15,6 +15,10 @@ List *List_create_empty() {
 }
 
 List *List_add_node(List *_list, void *_data) {
+    return List_stack(_list, _data);
+}
+
+List *List_stack(List *_list, void *_data) {
     
     if (_list == NULL) {
         return List_create(_data);
@@ -28,7 +32,7 @@ List *List_add_node(List *_list, void *_data) {
     return new_node;
 }
 
-List *List_add_node_at_the_end(List *_list, void *_data) {
+List *List_append(List *_list, void *_data) {
     
     if (_list == NULL) {
         return List_create(_data);
@@ -56,7 +60,7 @@ void *List_default_destroy_function(void *_data) {
     return NULL;
 }
 
-List *List_destroy(List *_list, void* destroy_function(void*)) {
+List *List_destroy(List *_list, void *_destroy_function(void *)) {
 
     while (_list != NULL) {
 
@@ -67,7 +71,7 @@ List *List_destroy(List *_list, void* destroy_function(void*)) {
         _list = _list->next;
 
         // limpa recursos do node atual
-        aux->data = destroy_function(aux->data);
+        aux->data = _destroy_function(aux->data);
         free(aux);
     }
 
@@ -78,10 +82,10 @@ void List_default_print_function(void *_data) {
     printf("%p", _data);
 }
 
-void List_print(List *_list, void print_function(void *)) {
+void List_print(List *_list, void _print_function(void *)) {
     printf("[ ");
     while (_list != NULL) {
-        print_function(_list->data);
+        _print_function(_list->data);
         if (_list->next != NULL) {
             printf(", ");
         } 
@@ -92,21 +96,24 @@ void List_print(List *_list, void print_function(void *)) {
 
 void List_test_implementation() {
     printf("--------------- Tests for %s implementation: Running now ---------------\n", __FILE__);
-
         int *test_0 = malloc(sizeof(int));
         char *test_1 = malloc(sizeof(char));
         double *test_2 = malloc(sizeof(double));
 
         printf("Creating list:\n");
-        List *List_test = List_create(test_0);
+        List *List_test = List_create_empty();
         List_print(List_test, List_default_print_function);
 
         printf("Adding data:\n");
-        List_test = List_add_node(List_test, test_1);
+        List_test = List_stack(List_test, test_0);
+        List_print(List_test, List_default_print_function);
+
+        printf("Adding data:\n");
+        List_test = List_stack(List_test, test_1);
         List_print(List_test, List_default_print_function);
 
         printf("Adding data at the end of the list:\n");
-        List_test = List_add_node_at_the_end(List_test, test_2);
+        List_test = List_append(List_test, test_2);
         List_print(List_test, List_default_print_function);
 
         List_test = List_destroy(List_test, List_default_destroy_function);
