@@ -11,20 +11,12 @@ ILOCInstruction *ILOCInstruction_new_empty() {
 
 ILOCInstruction *ILOCInstruction_new(char *op_code, char *src1, char *src2, char *dest) {
     ILOCInstruction *new_instruction = ILOCInstruction_new_empty();
-    new_instruction->op_code = malloc(ILOCINSTRUCTION_MAX_INSTRUCTION_STRING_SIZE * sizeof(char));
-    sprintf(new_instruction->op_code, op_code);
-    if (src1 != NULL) {
-        new_instruction->src1 = malloc(ILOCINSTRUCTION_MAX_INSTRUCTION_STRING_SIZE * sizeof(char));
-        sprintf(new_instruction->src1, src1);
-    }
-    if (src2 != NULL) {
-        new_instruction->src2 = malloc(ILOCINSTRUCTION_MAX_INSTRUCTION_STRING_SIZE * sizeof(char));
-        sprintf(new_instruction->src2, src2);
-    }
-    if (dest != NULL) {
-        new_instruction->dest = malloc(ILOCINSTRUCTION_MAX_INSTRUCTION_STRING_SIZE * sizeof(char));
-        sprintf(new_instruction->dest, dest);
-    }
+
+    new_instruction->op_code = op_code ? strdup(op_code) : NULL;
+    new_instruction->src1    = src1 ? strdup(src1) : NULL;
+    new_instruction->src2    = src2 ? strdup(src2) : NULL;
+    new_instruction->dest    = dest ? strdup(dest) : NULL;
+
     return new_instruction;
 }
 
@@ -48,23 +40,51 @@ void *ILOCInstruction_destroy(ILOCInstruction *_instruction) {
     return NULL;
 }
 
-void ILOCInstruction_print(ILOCInstruction *_instruction) {
-    if (_instruction != NULL) {
-        printf("ILOCInstruction: [");
-        printf("%s", _instruction->op_code);
-        if (_instruction->src1 != NULL) {
-            printf(", %s", _instruction->src1);
-        }
-        if (_instruction->src2 != NULL) {
-            printf(", %s", _instruction->src2);
-        }
-        if (_instruction->dest != NULL) {
-            printf(", %s", _instruction->dest);
-        }
-        printf("]");
-    } else {
-        printf("NULL");
+void ILOCInstruction_print(ILOCInstruction *i) {
+    if (!i || !i->op_code) return;
+
+    size_t n = strlen(i->op_code);
+    if (n > 0 && i->op_code[n-1] == ':') {
+        printf("%s nop\n", i->op_code);
+        return;
     }
+
+    if (!strcmp(i->op_code, "jumpI")) {
+        printf("jumpI -> %s\n", i->dest);
+        return;
+    }
+
+    if (!strcmp(i->op_code, "cbr")) {
+        printf("cbr %s -> %s\n", i->src1, i->dest);
+        return;
+    }
+
+    if (!strncmp(i->op_code, "cmp_", 4)) {
+        printf("%s %s, %s -> %s\n", i->op_code, i->src1, i->src2, i->dest);
+        return;
+    }
+
+    if (!strcmp(i->op_code, "storeAI")) {
+        printf("storeAI %s => %s\n", i->src1, i->dest);
+        return;
+    }
+
+    if (!strcmp(i->op_code, "loadAI")) {
+        printf("loadAI %s, %s => %s\n", i->src1, i->src2, i->dest);
+        return;
+    }
+
+    if (i->src1 && i->src2 && i->dest) {
+        printf("%s %s, %s => %s\n", i->op_code, i->src1, i->src2, i->dest);
+        return;
+    }
+
+    if (i->src1 && i->dest) {
+        printf("%s %s => %s\n", i->op_code, i->src1, i->dest);
+        return;
+    }
+
+    printf("%s\n", i->op_code);
 }
 
 void ILOCInstruction_test_implementation() {

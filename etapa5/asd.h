@@ -1,11 +1,15 @@
 #ifndef _ASD_H_
 #define _ASD_H_
 
+typedef struct ILOCCode ILOCCode;
+
 typedef struct asd_tree {
   char *label;
   int number_of_children;
   struct asd_tree **children;
   int dtype;
+  char *place;
+  ILOCCode *code; 
 } asd_tree_t;
 
 /*

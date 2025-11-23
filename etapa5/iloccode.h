@@ -28,5 +28,10 @@ int ILOCCode_update_current_temp();
 char *ILOCCode_current_temp_string();
 void ILOCCode_end();
 void ILOCCode_test_implementation();
+void ILOCCode_add_label(char *label);
+void ILOCCode_add_cbr(char *cond, char *ltrue, char *lfalse);
+void ILOCCode_add_jumpI(char *label);
+void ILOCCode_print(ILOCCode *_code);
+ILOCCode *ILOCCode_get_current();
 
 #endif  // #ifndef ILOCCODE_H

@@ -96,6 +96,9 @@ Symbol *Symbol_create(const char *_key, int _line, int _nature, int _type, const
     Symbol_set_value(new_symbol, _value);
     Symbol_init_params(new_symbol);
 
+    new_symbol->offset = 0;
+    new_symbol->base   = NULL;
+
     return new_symbol;
 }
 

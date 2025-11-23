@@ -5,13 +5,14 @@ CC      := gcc
 LEX     := flex
 YACC    := bison
 
-CFLAGS  := -Wall -Werror # -fsanitize=address
+CFLAGS  := -Wall -Werror -fsanitize=address
 
-EXE := etapa4
+EXE := etapa5
 
 OBJS := main.o parser.tab.o lex.yy.o asd.o \
         symbol.o symbolnode.o scope.o scopenode.o scopestackhandler.o \
-		semantics.o utils.o
+        semantics.o utils.o \
+        iloccode.o ilocinstruction.o list.o label.o
 
 all: $(EXE)
 
@@ -26,19 +27,20 @@ parser.tab.c parser.tab.h: parser.y
 lex.yy.c: scanner.l parser.tab.h
 	$(LEX) scanner.l
 
-# Fontes da etapa 3
+# AST
 asd.o: asd.c asd.h
 	$(CC) $(CFLAGS) -c $<
 
 # Parser gerado
-parser.tab.o: parser.tab.c asd.h scopestackhandler.h semantics.h errors.h
+parser.tab.o: parser.tab.c asd.h scopestackhandler.h semantics.h errors.h iloccode.h label.h
 	$(CC) $(CFLAGS) -c $<
 
 # Scanner gerado
 lex.yy.o: lex.yy.c parser.tab.h
 	$(CC) $(CFLAGS) -c $<
 
-main.o: main.c parser.tab.h asd.h
+# Main
+main.o: main.c parser.tab.h asd.h iloccode.h label.h
 	$(CC) $(CFLAGS) -c $<
 
 # Símbolos e tabela
@@ -58,17 +60,32 @@ scopenode.o: scopenode.c scopenode.h scope.h symbolnode.h symbol.h utils.h
 scopestackhandler.o: scopestackhandler.c scopestackhandler.h scopenode.h scope.h symbolnode.h symbol.h utils.h
 	$(CC) $(CFLAGS) -c $<
 
+# Semântica
 semantics.o: semantics.c semantics.h errors.h asd.h symbol.h scopestackhandler.h
 	$(CC) $(CFLAGS) -c $<
 
+# Utils
 utils.o: utils.c utils.h
 	$(CC) $(CFLAGS) -c $<
 
-# Utils
+list.o: list.c list.h
+	$(CC) $(CFLAGS) -c $<
+
+# ILOC
+iloccode.o: iloccode.c iloccode.h ilocinstruction.h list.h
+	$(CC) $(CFLAGS) -c $<
+
+ilocinstruction.o: ilocinstruction.c ilocinstruction.h
+	$(CC) $(CFLAGS) -c $<
+
+# Labels
+label.o: label.c label.h
+	$(CC) $(CFLAGS) -c $<
+
 clean:
 	rm -f *.o lex.yy.c parser.tab.c parser.tab.h parser.output $(EXE)
 
 run: $(EXE)
-	./$(EXE) < input.txt > saida.dot
+	./$(EXE) < input.txt > saida.iloc
 
 .PHONY: all clean run

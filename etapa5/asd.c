@@ -12,6 +12,8 @@ asd_tree_t *asd_new(const char *label)
     ret->number_of_children = 0;
     ret->children = NULL;
     ret->dtype = 0;
+    ret->place = NULL;
+    ret->code  = NULL;
   }
   return ret;
 }

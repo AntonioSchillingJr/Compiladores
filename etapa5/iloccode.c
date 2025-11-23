@@ -2,7 +2,7 @@
 
 static ILOCCode *code_register = NULL;
 static List *temp_memory_list = NULL;
-static unsigned long int temp_counter = 3;
+static unsigned long int temp_counter = 0;
 
 ILOCCode *ILOCCode_new() {
     ILOCCode *code = malloc(sizeof(ILOCCode));
@@ -20,13 +20,13 @@ void ILOCCode_start() {
     }
 
     code_register = ILOCCode_new();
-    temp_counter = 3;
+    temp_counter = 0;
     temp_memory_list = List_create_empty();
 }
 
 char *ILOCCode_new_temp() {
-    char *temp = malloc(ILOCCODE_TEMP_MAX_SIZE * sizeof(char));
-    sprintf(temp, "r%lu", temp_counter);
+    char *temp = malloc(ILOCCODE_TEMP_MAX_SIZE);
+    snprintf(temp, ILOCCODE_TEMP_MAX_SIZE, "r%lu", temp_counter);
     temp_counter++;
     temp_memory_list = List_add_node(temp_memory_list, temp);
     return temp;
@@ -76,7 +76,7 @@ char *ILOCCode_direct_add_instruction_with_new_temp(ILOCCode *_code, char *_op, 
     char *dest_str = ILOCCode_new_temp();
     
     ILOCCode_direct_add_instruction(_code, _op, _src1, _src2, dest_str);
-    _code->last_temp = temp_counter;
+    _code->last_temp = temp_counter - 1;
     
     return dest_str;
 }
@@ -95,13 +95,19 @@ int ILOCCode_update_current_temp() {
 
 char *ILOCCode_temp_to_string(int _temp) {
     char *str = malloc(ILOCINSTRUCTION_MAX_INSTRUCTION_STRING_SIZE);
-    sprintf(str, "r%d", _temp);
+    snprintf(str, ILOCINSTRUCTION_MAX_INSTRUCTION_STRING_SIZE, "r%d", _temp);
     return str;
 }
 
 ILOCCode *ILOCCode_destroy(ILOCCode *_code) {
     if (_code != NULL) {
         if (_code->instructions != NULL) {
+            for (int i = 0; i < _code->count; i++) {
+                free(_code->instructions[i].op_code);
+                free(_code->instructions[i].src1);
+                free(_code->instructions[i].src2);
+                free(_code->instructions[i].dest);
+            }
             free(_code->instructions);
         }
         free(_code);
@@ -118,18 +124,9 @@ void ILOCCode_end() {
 }
 
 void ILOCCode_print(ILOCCode *_code) {
-    if (_code != NULL) {
-        printf("ILOCCode: [");
-        if (_code->count != 0) {
-            for (size_t i = 0; i < _code->count - 1; i++) {
-                ILOCInstruction_print(&_code->instructions[i]);
-                printf(", ");
-            }
-            ILOCInstruction_print(&_code->instructions[_code->count - 1]);
-        }
-        printf("]\n");
-    } else {
-        printf("ILOCCode: [NULL]\n");
+    if (!_code) return;
+    for (int i = 0; i < _code->count; i++) {
+        ILOCInstruction_print(&_code->instructions[i]);
     }
 }
 
@@ -188,3 +185,21 @@ void ILOCCode_test_implementation() {
         ILOCCode_print_current_code_structure_memory_state();
     printf("--------------- Tests for %s implementation: Ended ---------------\n", __FILE__);
 }
+
+void ILOCCode_add_label(char *label) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%s:", label);
+    ILOCCode_add_instruction(buf, NULL, NULL, NULL);
+}
+
+void ILOCCode_add_cbr(char *cond, char *ltrue, char *lfalse) {
+    char dest[128];
+    snprintf(dest, sizeof(dest), "%s, %s", ltrue, lfalse);
+    ILOCCode_add_instruction("cbr", cond, NULL, dest);
+}
+
+void ILOCCode_add_jumpI(char *label) {
+    ILOCCode_add_instruction("jumpI", NULL, NULL, label);
+}
+
+ILOCCode *ILOCCode_get_current() { return code_register; }

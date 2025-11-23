@@ -22,25 +22,48 @@
   #include "semantics.h"
   #include "scopestackhandler.h"
   #include "errors.h"
+  #include "iloccode.h"
+  #include "label.h"
 
   typedef struct valor_lexico {
     int   line;
     int   token_kind;
     char  *value;
   } valor_lexico_t;
+
+  typedef struct label_pack {
+    char *l_then;
+    char *l_else;
+    char *l_end;
+    char *l_cond;
+    char *l_body;
+  } label_pack_t;
+
+  typedef struct if_prefix_info {
+    asd_tree_t   *cond;
+    label_pack_t  lab;
+  } if_prefix_info_t;
 }
 
 %code {
   static inline void free_val(valor_lexico_t* v){
     if (v) { free(v->value); free(v); }
   }
+  static long global_disp = 0;
+  static long local_disp  = 0;
 }
 
 %union {
   valor_lexico_t *valor_lexico; /* TK_ID e literais */
   asd_tree_t     *nodo;         /* nodo da AST para não-terminais */
   int             tipo;         /* tipo escalar (TYPE_*) */
+
+  label_pack_t     labels;
+  if_prefix_info_t ifpref;
 }
+
+%type <labels> while_labels
+%type <ifpref> if_prefix
 
 /* Apenas IDs e literais tem valor */
 %token <valor_lexico> TK_ID TK_LI_INTEIRO TK_LI_DECIMAL
@@ -64,12 +87,20 @@
 
 /* Programa: vazio ou lista de elementos */
 programa
-  : __start_scopes lista ';' __end_scopes { arvore = $2; $$ = $2; }
-  | %empty                                { arvore = NULL; $$ = NULL; }
+  : __start_scopes lista ';' __end_scopes {
+      arvore = $2;
+      if (arvore) arvore->code = ILOCCode_get_current();
+      $$ = $2;
+  }
+  | %empty { arvore = NULL; $$ = NULL; }
   ;
 
 __start_scopes
-  : %empty { ScopeStackHandler_start(); }
+  : %empty {
+      ScopeStackHandler_start();
+      global_disp = 0;
+      local_disp = 0;
+  }
   ;
 
 __end_scopes
@@ -126,6 +157,8 @@ cabecalho_funcao
       SEM_current_function_type = $3;
       SEM_current_function = f;
 
+      local_disp = 0;
+
       /* escopo para parâmetros e corpo da função */
       ScopeStackHandler_push_empty_scope();
     }
@@ -154,11 +187,18 @@ lista_param
   : TK_ID TK_ATRIB tipo {
       Symbol *prev = ScopeStackHandler_get_symbol_by_key($1->value);
       if (prev) {
-        SEM_error(ERR_DECLARED,
-          "parâmetro '%s' já declarado (linha %d)",
-          $1->value, prev->line);
+        if (!(prev->nature == NATURE_FUNC && SEM_current_function != NULL)) {
+            SEM_error(ERR_DECLARED,
+                      "parâmetro '%s' já declarado (linha %d)",
+                      $1->value, prev->line);
+        }
       }
       Symbol *p = Symbol_create($1->value, $1->line, NATURE_VAR, $3, "");
+
+      p->base   = "rfp";
+      p->offset = local_disp;
+      local_disp += 4;
+
       ScopeStackHandler_add_symbol_to_current_scope(p);
 
       if (SEM_current_function) Symbol_add_param(SEM_current_function, $3);
@@ -169,11 +209,18 @@ lista_param
   | lista_param ',' TK_ID TK_ATRIB tipo {
       Symbol *prev = ScopeStackHandler_get_symbol_by_key($3->value);
       if (prev) {
-        SEM_error(ERR_DECLARED,
-          "parâmetro '%s' já declarado (linha %d)",
-          $3->value, prev->line);
+        if (!(prev->nature == NATURE_FUNC && SEM_current_function != NULL)) {
+            SEM_error(ERR_DECLARED,
+                      "parâmetro '%s' já declarado (linha %d)",
+                      $3->value, prev->line);
+        }
       }
       Symbol *p = Symbol_create($3->value, $3->line, NATURE_VAR, $5, "");
+
+      p->base   = "rfp";
+      p->offset = local_disp;
+      local_disp += 4;
+
       ScopeStackHandler_add_symbol_to_current_scope(p);
 
       if (SEM_current_function) Symbol_add_param(SEM_current_function, $5);
@@ -222,11 +269,24 @@ declaracao_variavel_sem_init
   : TK_VAR TK_ID TK_ATRIB tipo {
       Symbol *prev = ScopeStackHandler_get_symbol_by_key($2->value);
       if (prev) {
-        SEM_error(ERR_DECLARED,
-          "identificador '%s' já declarado (linha %d)",
-          $2->value, prev->line);
+        if (!(prev->nature == NATURE_FUNC && SEM_current_function != NULL)) {
+            SEM_error(ERR_DECLARED,
+                      "identificador '%s' já declarado (linha %d)",
+                      $2->value, prev->line);
+        }
       }
       Symbol *s = Symbol_create($2->value, $2->line, NATURE_VAR, $4, "");
+
+      if (SEM_current_function == NULL) {
+          s->base = "rbss";
+          s->offset = global_disp;
+          global_disp += 4;
+      } else {
+          s->base = "rfp";
+          s->offset = local_disp;
+          local_disp += 4;
+      }
+
       ScopeStackHandler_add_symbol_to_current_scope(s);
       free_val($2);
       $$ = NULL;
@@ -239,12 +299,29 @@ declaracao_variavel
   | TK_VAR TK_ID TK_ATRIB tipo TK_COM literal_tipo {
       Symbol *prev = ScopeStackHandler_get_symbol_by_key($2->value);
       if (prev) {
-        SEM_error(ERR_DECLARED,
-          "identificador '%s' já declarado (linha %d)",
-          $2->value, prev->line);
+        if (!(prev->nature == NATURE_FUNC && SEM_current_function != NULL)) {
+            SEM_error(ERR_DECLARED,
+                      "identificador '%s' já declarado (linha %d)",
+                      $2->value, prev->line);
+        }
       }
       Symbol *s = Symbol_create($2->value, $2->line, NATURE_VAR, $4, "");
       ScopeStackHandler_add_symbol_to_current_scope(s);
+
+      if (SEM_current_function == NULL) {
+          s->base = "rbss";
+          s->offset = global_disp;
+          global_disp += 4;
+      } else {
+          s->base = "rfp";
+          s->offset = local_disp;
+          local_disp += 4;
+      }
+      
+      char dest[64];
+      snprintf(dest, sizeof(dest), "%s, %ld", s->base, s->offset);
+      ILOCCode_add_instruction("storeAI", $6->place, NULL, dest);
+
       $$ = asd_new("com");
       asd_add_child($$, asd_new($2->value));
       asd_add_child($$, $6);
@@ -259,7 +336,11 @@ declaracao_variavel
 /* Literais -> nodo folha com o lexema */
 literal_tipo
   : TK_LI_DECIMAL { $$ = set_dtype(asd_new($1->value), TYPE_DEC);   free_val($1); }
-  | TK_LI_INTEIRO { $$ = set_dtype(asd_new($1->value), TYPE_INT);   free_val($1); }
+  | TK_LI_INTEIRO {
+      $$ = set_dtype(asd_new($1->value), TYPE_INT);
+      $$->place = ILOCCode_add_instruction_with_new_temp("loadI", $1->value, NULL);
+      free_val($1);
+    }
   ;
 
 /* ---------- Atribuição ---------- */
@@ -269,6 +350,11 @@ atribuicao
       Symbol *s = ScopeStackHandler_get_symbol_by_key($1->value);
       if (!s) SEM_error(ERR_UNDECLARED, "identificador '%s' não declarado", $1->value);
       if (s->nature != NATURE_VAR) SEM_error(ERR_FUNCTION, "função '%s' usada como variável", $1->value);
+
+      char dest[64];
+      snprintf(dest, sizeof(dest), "%s, %ld", s->base, s->offset);
+      ILOCCode_add_instruction("storeAI", $3->place, NULL, dest);
+
       $$ = asd_new(":=");
       asd_add_child($$, asd_new($1->value));
       if ($3) asd_add_child($$, $3);
@@ -351,22 +437,44 @@ retorno
 
 /* ---------- Controle de fluxo ---------- */
 
-comando_se
-  : TK_SE '(' expr ')' bloco_de_comandos {
-      $$ = asd_new("se");
-      if ($3) asd_add_child($$, $3);
-      if ($5) asd_add_child($$, $5);
-      $$->dtype = $3?$3->dtype:TYPE_UNTYPED;
-    }
-  | TK_SE '(' expr ')' bloco_de_comandos TK_SENAO bloco_de_comandos {
-      $$ = asd_new("se");
-      if ($3) asd_add_child($$, $3);
-      if ($5) asd_add_child($$, $5);
-      if ($7) asd_add_child($$, $7);
-      $$->dtype = $3?$3->dtype:TYPE_UNTYPED;
+if_prefix
+  : TK_SE '(' expr ')' {
+      $$.cond        = $3;
+      $$.lab.l_then  = Label_new();
+      $$.lab.l_else  = Label_new();
+      $$.lab.l_end   = Label_new();
 
-      int t_if   = $5 ? $5->dtype : TYPE_INT;
-      int t_else = $7 ? $7->dtype : TYPE_INT;
+      if ($3 && $3->place) {
+        ILOCCode_add_cbr($3->place, $$.lab.l_then, $$.lab.l_else);
+        ILOCCode_add_label($$.lab.l_then);
+      }
+    }
+  ;
+
+comando_se
+  : if_prefix bloco_de_comandos {
+      $$ = asd_new("se");
+      if ($1.cond) asd_add_child($$, $1.cond);
+      if ($2)      asd_add_child($$, $2);
+      $$->dtype = $1.cond ? $1.cond->dtype : TYPE_UNTYPED;
+
+      ILOCCode_add_label($1.lab.l_else);
+    }
+  | if_prefix bloco_de_comandos TK_SENAO {
+      ILOCCode_add_jumpI($1.lab.l_end);
+      ILOCCode_add_label($1.lab.l_else);
+    }
+    bloco_de_comandos {
+      $$ = asd_new("se");
+      if ($1.cond) asd_add_child($$, $1.cond);
+      if ($2)      asd_add_child($$, $2);
+      if ($5)      asd_add_child($$, $5);
+      $$->dtype = $1.cond ? $1.cond->dtype : TYPE_UNTYPED;
+
+      ILOCCode_add_label($1.lab.l_end);
+
+      int t_if   = $2 ? $2->dtype : TYPE_INT;
+      int t_else = $5 ? $5->dtype : TYPE_INT;
       int t = promote_bin(t_if, t_else);
       if (t < 0) {
         SEM_error(ERR_WRONG_TYPE,
@@ -378,12 +486,33 @@ comando_se
     }
   ;
 
+
+while_labels
+  : %empty {
+      $$.l_cond = Label_new();
+      $$.l_body = Label_new();
+      $$.l_end  = Label_new();
+
+      ILOCCode_add_label($$.l_cond);
+    }
+  ;
+
+
 comando_enquanto
-  : TK_ENQUANTO '(' expr ')' bloco_de_comandos {
+  : TK_ENQUANTO while_labels '(' expr ')' {
+      if ($4 && $4->place) {
+        ILOCCode_add_cbr($4->place, $2.l_body, $2.l_end);
+        ILOCCode_add_label($2.l_body);
+      }
+    }
+    bloco_de_comandos {
+      ILOCCode_add_jumpI($2.l_cond);
+      ILOCCode_add_label($2.l_end);
+
       $$ = asd_new("enquanto");
-      if ($3) asd_add_child($$, $3);
-      if ($5) asd_add_child($$, $5);
-      $$->dtype = $3?$3->dtype:TYPE_UNTYPED;
+      if ($4) asd_add_child($$, $4);
+      if ($7) asd_add_child($$, $7);
+      $$->dtype = $4?$4->dtype:TYPE_UNTYPED;
     }
   ;
 
@@ -400,6 +529,10 @@ expr_or
       $$ = asd_new("|");
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
+
+      $$->place = ILOCCode_add_instruction_with_new_temp(
+                    "or", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_and { $$ = $1; }
@@ -412,6 +545,9 @@ expr_and
       $$ = asd_new("&");
       if ($1) asd_add_child($$, $1);
       if ($3) asd_add_child($$, $3);
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("and", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_eq { $$ = $1; }
@@ -423,6 +559,9 @@ expr_eq
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '=='");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("cmp_EQ", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_eq TK_OC_NE expr_rel {
@@ -431,6 +570,9 @@ expr_eq
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '!='");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("cmp_NE", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_rel             { $$ = $1; }
@@ -442,6 +584,9 @@ expr_rel
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '<'");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("cmp_LT", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_rel '>' expr_add {
@@ -450,6 +595,9 @@ expr_rel
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '>'");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("cmp_GT", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_rel TK_OC_LE expr_add {
@@ -458,6 +606,9 @@ expr_rel
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '<='");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("cmp_LE", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_rel TK_OC_GE expr_add {
@@ -466,6 +617,9 @@ expr_rel
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '>='");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("cmp_GE", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_add             { $$ = $1; }
@@ -477,6 +631,9 @@ expr_add
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '+'");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("add", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_add '-' expr_mul {
@@ -485,6 +642,9 @@ expr_add
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '-'");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("sub", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_mul             { $$ = $1; }
@@ -496,6 +656,9 @@ expr_mul
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '*'");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("mult", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_mul '/' expr_un {
@@ -504,6 +667,9 @@ expr_mul
       if ($3) asd_add_child($$, $3);
       int t = promote_bin($1?$1->dtype:TYPE_UNTYPED, $3?$3->dtype:TYPE_UNTYPED);
       if (t < 0) SEM_error(ERR_WRONG_TYPE, "tipos incompatíveis na operação '/'");
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("div", $1->place, $3->place);
+
       $$->dtype = t;
     }
   | expr_mul '%' expr_un {
@@ -519,9 +685,28 @@ expr_mul
 
 /* Operadores unários com pelo menos 1 filho */
 expr_un
-  : '+' expr_un { $$ = asd_new("+"); if ($2) asd_add_child($$, $2); $$->dtype = $2 ? $2->dtype : TYPE_UNTYPED; }
-  | '-' expr_un { $$ = asd_new("-"); if ($2) asd_add_child($$, $2); $$->dtype = $2 ? $2->dtype : TYPE_UNTYPED; }
-  | '!' expr_un { $$ = asd_new("!"); if ($2) asd_add_child($$, $2); $$->dtype = $2 ? $2->dtype : TYPE_UNTYPED; }
+    : '+' expr_un {
+      $$ = asd_new("+");
+      if ($2) asd_add_child($$, $2);
+      $$->dtype = $2 ? $2->dtype : TYPE_UNTYPED;
+
+      $$->place = $2 ? $2->place : NULL;
+    }
+    | '-' expr_un {
+      $$ = asd_new("-");
+      if ($2) asd_add_child($$, $2);
+      $$->dtype = $2 ? $2->dtype : TYPE_UNTYPED;
+
+      $$->place = ILOCCode_add_instruction_with_new_temp("rsubI", $2->place, "0");
+    }
+    | '!' expr_un {
+      $$ = asd_new("!");
+      if ($2) asd_add_child($$, $2);
+      $$->dtype = TYPE_INT;
+
+      char *z = ILOCCode_add_instruction_with_new_temp("loadI", "0", NULL);
+      $$->place = ILOCCode_add_instruction_with_new_temp("cmp_EQ", $2->place, z);
+    }
   | expr_zero   { $$ = $1; }
   ;
 
@@ -534,9 +719,18 @@ expr_zero
         SEM_error(ERR_FUNCTION, "função '%s' usada como variável", $1->value);
       $$ = asd_new($1->value);
       $$->dtype = s->type;
+
+      char off[32];
+      snprintf(off, sizeof(off), "%ld", s->offset);
+      $$->place = ILOCCode_add_instruction_with_new_temp("loadAI", (char*)s->base, off);
+
       free_val($1);
     }
-  | TK_LI_INTEIRO { $$ = set_dtype(asd_new($1->value), TYPE_INT); free_val($1); }
+  | TK_LI_INTEIRO {
+      $$ = set_dtype(asd_new($1->value), TYPE_INT);
+      $$->place = ILOCCode_add_instruction_with_new_temp("loadI", $1->value, NULL);
+      free_val($1);
+    }
   | TK_LI_DECIMAL { $$ = set_dtype(asd_new($1->value), TYPE_DEC); free_val($1); }
   | '(' expr ')'  { $$ = $2; }
   ;

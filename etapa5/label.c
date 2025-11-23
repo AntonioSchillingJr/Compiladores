@@ -17,8 +17,8 @@ void Label_add_label_to_memory_list(char *_label) {
 }
 
 char *Label_new() {
-    char *label = malloc(LABEL_MAX_SIZE * sizeof(char));
-    sprintf(label, "L%lu", label_counter);
+    char *label = malloc(LABEL_MAX_SIZE);
+    snprintf(label, LABEL_MAX_SIZE, "L%lu", label_counter);
     label_counter++;
     Label_add_label_to_memory_list(label);
     return label;

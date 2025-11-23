@@ -21,6 +21,8 @@ typedef struct Symbol {
     char value[SYMBOL_MAX_SIZE];
     int param_count;
     int param_types[SYMBOL_MAX_PARAMS];
+    long offset;
+    const char *base;
 } Symbol;
 
 void Symbol_init_params(Symbol *s);
