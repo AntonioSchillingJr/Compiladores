@@ -1,0 +1,10 @@
+main -> inteiro := [
+    var a := inteiro
+    var b := inteiro
+    a := 1
+    b := 6
+    enquanto (a < b)[
+        a := a + 1
+    ]
+    retorna a := inteiro
+];

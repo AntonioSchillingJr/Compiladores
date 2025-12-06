@@ -1,0 +1,11 @@
+var g := inteiro,
+
+main -> inteiro := [
+    g := 0
+
+    enquanto (g < 5) [
+        g := g + 1
+    ]
+
+    retorna g := inteiro
+];

@@ -1,0 +1,9 @@
+var g1 := inteiro,
+var g2 := inteiro,
+
+main -> inteiro := [
+    g1 := 10
+    g2 := 20
+
+    retorna g1 * g2 := inteiro
+];
